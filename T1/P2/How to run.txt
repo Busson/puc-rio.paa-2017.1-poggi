@@ -1,0 +1,26 @@
+---Comando para compilar com o gcc deve-se executar o seguinte comando:
+
+gcc Knapsack.cpp -o Knapsack
+
+
+
+---Comando para rodar as instancias dos problemos fornecidos:
+
+./Knapsack "path_instance" "question"
+
+---por exemplo, para executar a instancia "Data-1000-Q4.txt" da questão 2:
+
+./Knapsack m50.in 2
+
+
+
+
+
+---O output do programa é o arquivo "Output.txt" que é gerado na pasta onde está o executável.
+
+
+
+
+---P.S: Em algumas versões do Ubuntu há uma restrição para não se usar todos os recursos de memória do computador. Então para ter acesso completo aa memória é necessário rodar o seguinte comando:
+
+ulimit -s unlimited
