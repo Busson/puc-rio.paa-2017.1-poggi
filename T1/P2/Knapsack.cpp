@@ -259,7 +259,7 @@ struct knapsack
 }
 
 struct item 
-*loadItens (FILE *file) ///O(n²)
+*loadItens (FILE *file) ///O(n)
 {
     char line[3000];
     char *result;
@@ -268,40 +268,45 @@ struct item
     int i = 0;
     int j = 0;
 
-    result = fgets(line, 3000, file); //Pegando a primeira linha
+    result = fgets(line, 3000, file); //Get the first line.
     sscanf(result, "%d", &numberItens_);
 
-    struct item *itens = (struct item *) malloc (sizeof (struct item) * numberItens_); //Vetor de itens
+    struct item *itens = (struct item *) malloc (sizeof (struct item) * numberItens_); //Instantiate itens struct.
 
-    while (!feof (file)){ ///O(n²)
-        result = fgets(line, 3000, file); //Pegando a próxima linha.
+    while (!feof (file)) ///O(n)
+    { 
+        result = fgets(line, 3000, file); //Get the next line.
         pch = strtok(result," ");
         
         i++;
+        j = 0;
 
-        while (pch != NULL){ /*Iterando na linha.*/ ///O(m+3)
-            if (strpbrk(pch, "0123456789") == NULL){ //Verifica se a string possui algum número
+        while (pch != NULL) //Get the next string.
+        {
+            if (strpbrk(pch, "0123456789") == NULL) //Checking whether the string contain some number.
+            { 
 //                printf("String: %s\n",pch);
             }
-            else if ( i > numberItens_ )
+            else if ( i > numberItens_ ) //Get the last line.
             {
-              knapsackSize_ = atoi (pch);
+              knapsackSize_ = atoi (pch); //Assign capacity to Knapsack.
             }
             else 
             {
-                switch (j) {
-                case 0: //Primeira string lida na linha
-                    itens[i].id = atoi(pch); //Atribui o índice do item
+                switch (j) 
+                {
+                  case 0: //First string in the line.
+                    itens[i].id = atoi(pch); //Assign id to item.
                     break;
-                case 1: //Segunda string lida na linha
-                    itens[i].value = atoi(pch); //Atribui o valor do item
+                  case 1: //Second string in the line.
+                    itens[i].value = atoi(pch); //Assign value to item.
                     break;
-                case 2: //Terceira string lida na linha
-                    itens[i].weight = atoi(pch); //Atribui o peso do item
-                    itens[i].rate = (float)itens[i].value/itens[i].weight; //Atribui a razão entre o valor e peso do item.
+                  case 2: //Third string in the line.
+                    itens[i].weight = atoi(pch); //Assign weight to item.
+                    itens[i].rate = (float)itens[i].value/itens[i].weight; //Assign rate (value/weight) to item.
                     break;
-                default: //Outras strings lida na linha
-                    break;
+                  default: 
+                      break;
                 }
 
                 j++;
@@ -324,25 +329,45 @@ main (int argc, char **argv)
         return 0;
     }
 
-    FILE *fileIn = fopen (argv[1], "r"); //Arquivo de entrada
+    FILE *fileIn = fopen (argv[1], "r"); // Input file.
     if (fileIn == NULL)
     {
         printf ("Erro, nao foi possivel abrir o arquivo de entrada\n");
         return 0;
     }
 
-    struct item *itens = loadItens (fileIn); /*Carrega os valores da instância.*/ /// O(n²)
+    struct item *itens = loadItens (fileIn); // Load instances. / O(n²)
 
     fclose (fileIn);
 
-    FILE *fileOut = fopen ("Output.txt", "w"); //Arquivo de saída
+    FILE *fileOut = fopen ("Output.txt", "w"); // Output file.
     if (fileOut == NULL)
     {
         printf ("Erro, nao foi possivel criar o arquivo de saída\n");
         abort ();
     }
+    
+    switch ( atoi (argv[2]) ) // Select question.
+    {
+      case 1: // O(nlog n)
+        showItens ( greedyKnapsackFractional (itens,numberItens_,knapsackSize_),fileOut );
+        break;
 
-    showItens ( greedyKnapsackFractional (itens,numberItens_,knapsackSize_),fileOut ); /// O(nlog n)
+      case 2: // O(n)
+        // TODO
+        printf ("TODO\n");
+        break;
+
+      case 3: // O(n²)
+        // TODO
+        printf ("TODO\n");
+        break;
+
+      default:
+        printf ("Questão inválida\n");
+        break;
+    
+    }
 
     fclose (fileOut);
 
