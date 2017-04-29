@@ -167,6 +167,8 @@ stp_get_content(STP_DOCUMENT* doc, const gchar* path){
    g_object_unref(file);
 }
 
+// how compile
+// cc stp_reader.c `pkg-config --cflags --libs glib-2.0 gobject-2.0 gio-2.0` -o stp_reader
 int main(){
 
     STP_DOCUMENT *doc = stp_new();  
