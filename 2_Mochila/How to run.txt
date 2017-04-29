@@ -1,6 +1,0 @@
-gcc prog.c -o prog
-
-./prog
-
-
-ulimit -s unlimited
