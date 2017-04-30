@@ -5,7 +5,7 @@
 
 static int numberItens_ = -1;
 static int knapsackSize_ = -1;
-static bool fraction_ = false;
+static bool fractionItem_ = false;
 
 struct item
 {
@@ -200,26 +200,30 @@ void
 showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
     //printf ("%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
-    printf ("\nNumero de itens na mochila: \t%d\nPeso Total dos Itens: \t\t%d\nValor total dos Itens: \t\t%f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
+    printf ("\nQuantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
 
     for (int i = 0; i < knapsack->numberItens; i++)
     {
-        printf ("Id: %d\tFraction: %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
+        printf ("Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
     }
 
-    fprintf (file,"%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
+    //fprintf (file,"%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
+    fprintf (file,"Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
 
     for (int i = 0; i < knapsack->numberItens; i++) 
     {
-        fprintf(file,"%d %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
+        //fprintf(file,"%d %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
+        fprintf(file,"Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
     }
 
-    if(fraction_){
+    if(fractionItem_){
       printf ("\nHá um item fracionado.\n");
+      fprintf(file,"\nHá um item fracionado.\n");
       return;
     }
 
-    printf ("\nTodos os itens são inteiros.\n");
+    printf ("\nTodos os itens estão inteiros.\n");
+    fprintf(file,"\nTodos os itens estão inteiros.\n");
 }
 
 struct knapsack 
@@ -244,7 +248,7 @@ struct knapsack
             weightItens += max;
 
             count++;
-            fraction_ = true;
+            fractionItem_ = true;
             break;
         }
 
