@@ -3,8 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 
-int numberItens_ = -1;
-int knapsackSize_ = -1;
+static int numberItens_ = -1;
+static int knapsackSize_ = -1;
+static bool fractionItem_ = false;
 
 struct item
 {
@@ -20,8 +21,7 @@ struct knapsack
     int numberItens;
     int weightItens;
     float valueItens;
-    struct item *itens;
-    int heuristic;
+    struct item *itens;    
 };
 
 void 
@@ -174,46 +174,60 @@ heapsortRate (struct item *list, int length, bool asc) /// O(nlog n)
 void 
 detailItens (struct item *a, int length)
 {
-    printf("%d %d %d\n",numberItens_,knapsackSize_,length);
+    printf ("Total de Objetos: %d; Capacidade da Mochila: %d\n", numberItens_, knapsackSize_);
 
-    //heapsortId(a,length,true);
     int totalWeight = 0;
     int totalProfit = 0;
 
-    for(int i = 0; i < length; i++){
-        printf("Line %d: ", i + 2);
-        printf("Id: %d ; ", a[i].id);
-        printf("Value: %d ; ", a[i].value);
-        printf("Weight: %d ; ", a[i].weight);
+    for (int i = 0; i < length; i++)
+    {
+        printf ("Line %d: ", i + 2);
+        printf ("Id: %d ; ", a[i].id);
+        printf ("Value: %d ; ", a[i].value);
+        printf ("Weight: %d ; ", a[i].weight);
+        //printf ("Fraction: %f ;", a[i].fractionItem);
         
-        printf("\n \n");
+        printf ("\n");
 
         totalWeight += a[i].weight;
         totalProfit += a[i].value;
     }
-    printf("Total de objetos: %d; Peso total: %d; Lucro total: %d\n",length,totalWeight,totalProfit);
+
+    printf ("\nTotal de objetos: %d; Peso total: %d; Lucro total: %d\n\n",length,totalWeight,totalProfit);
 }
 
 void 
 showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
-    printf ("%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
+    //printf ("%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
+    printf ("\nQuantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
 
-    for (int i=0; i < knapsack->numberItens; i++)
+    for (int i = 0; i < knapsack->numberItens; i++)
     {
-        printf ("%d %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
+        printf ("Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
     }
 
-    fprintf (file,"%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
+    //fprintf (file,"%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
+    fprintf (file,"Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
 
-    for (int i=0; i < knapsack->numberItens; i++) 
+    for (int i = 0; i < knapsack->numberItens; i++) 
     {
-        fprintf(file,"%d %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
+        //fprintf(file,"%d %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
+        fprintf(file,"Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
     }
+
+    if(fractionItem_){
+      printf ("\nHá um item fracionado.\n");
+      fprintf(file,"\nHá um item fracionado.\n");
+      return;
+    }
+
+    printf ("\nTodos os itens estão inteiros.\n");
+    fprintf(file,"\nTodos os itens estão inteiros.\n");
 }
 
 struct knapsack 
-*greedyKnapsackFractional (struct item *item,int length,int max) /// O(nlog n)
+*greedyKnapsackFractional (struct item *item, int length, int max) /// O(nlog n)
 {
     heapsortRate (item,length,false);  /// O(nlog n)
 
@@ -221,26 +235,28 @@ struct knapsack
     int weightItens = 0;
     int count = 0;
 
-    struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); //Vetor de incidencia de conflitos;
+    struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
     knapsack->itens = (struct item *) malloc(sizeof(struct item));
 
     for(int i = 0; i < length; i++){ /// O(n)
         if(item[i].weight > max){
-            knapsack->itens = (struct item *) realloc(knapsack->itens,sizeof(struct item)*(count+1));
+            knapsack->itens = (struct item *) realloc (knapsack->itens, sizeof (struct item) * (count+1));
             knapsack->itens[count].id = item[i].id;
+            knapsack->itens[count].fractionItem = (float) max / item[i].weight;
 
-            valueItens += (float)item[i].value * max / item[i].weight;
+            valueItens += (float) item[i].value * max / item[i].weight;
             weightItens += max;
 
             count++;
-
+            fractionItem_ = true;
             break;
         }
 
-        knapsack->itens = (struct item *) realloc(knapsack->itens,sizeof(struct item)*(count+1));
+        knapsack->itens = (struct item *) realloc ( knapsack->itens, sizeof (struct item) * (count+1));
         knapsack->itens[count].id = item[i].id;
+        knapsack->itens[count].fractionItem = item[i].fractionItem;
 
-        valueItens += (float)item[i].value;
+        valueItens += (float) item[i].value;
         weightItens += item[i].weight;
 
         count++;
@@ -261,33 +277,32 @@ struct knapsack
 struct item 
 *loadItens (FILE *file) ///O(n)
 {
-    char line[3000];
+    char line[1000];
     char *result;
     char *pch;
 
     int i = 0;
     int j = 0;
 
-    result = fgets(line, 3000, file); //Get the first line.
+    result = fgets(line, 1000, file); //Get the first line.
     sscanf(result, "%d", &numberItens_);
 
     struct item *itens = (struct item *) malloc (sizeof (struct item) * numberItens_); //Instantiate itens struct.
-
+    
     while (!feof (file)) ///O(n)
     { 
-        result = fgets(line, 3000, file); //Get the next line.
+        result = fgets(line, 1000, file); //Get the next line.
         pch = strtok(result," ");
         
-        i++;
         j = 0;
 
         while (pch != NULL) //Get the next string.
         {
-            if (strpbrk(pch, "0123456789") == NULL) //Checking whether the string contain some number.
+            if (strpbrk(pch, "0123456789") == NULL) //Checking whether the string contains some number.
             { 
 //                printf("String: %s\n",pch);
             }
-            else if ( i > numberItens_ ) //Get the last line.
+            else if ( i >= numberItens_ ) //Get the last line.
             {
               knapsackSize_ = atoi (pch); //Assign capacity to Knapsack.
             }
@@ -297,6 +312,7 @@ struct item
                 {
                   case 0: //First string in the line.
                     itens[i].id = atoi(pch); //Assign id to item.
+                    itens[i].fractionItem = 1;
                     break;
                   case 1: //Second string in the line.
                     itens[i].value = atoi(pch); //Assign value to item.
@@ -311,11 +327,13 @@ struct item
 
                 j++;
             }
-            pch = strtok(NULL," ");
+            pch = strtok (NULL," ");
         }        
+        
+        i++;
     }
 
-    detailItens(itens,numberItens_);
+    //detailItens (itens, numberItens_);
 
     return itens;
 }
@@ -339,7 +357,7 @@ main (int argc, char **argv)
     struct item *itens = loadItens (fileIn); // Load instances. / O(n²)
 
     fclose (fileIn);
-
+ 
     FILE *fileOut = fopen ("Output.txt", "w"); // Output file.
     if (fileOut == NULL)
     {
@@ -364,7 +382,7 @@ main (int argc, char **argv)
         break;
 
       default:
-        printf ("Questão inválida\n");
+        printf ("Questao invalida\n");
         break;
     
     }
