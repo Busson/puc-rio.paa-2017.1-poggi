@@ -1,0 +1,41 @@
+33d32945 STP File, STP Format Version  1.00
+Section Comment
+Name    "Test"
+Creator "Antonio Busson"
+Remark  "Test file"
+End
+
+Section Graph
+Nodes 9
+Edges 28
+E 1 2 4
+E 1 8 8
+E 2 1 4
+E 2 3 8
+E 2 8 11
+E 3 2 8
+E 3 4 7
+E 3 6 4
+E 3 9 2
+E 4 3 7
+E 4 5 9
+E 4 6 14
+E 5 4 9
+E 5 6 10
+E 6 3 4
+E 6 4 14
+E 6 5 10
+E 6 7 2
+E 7 6 2
+E 7 8 1
+E 7 9 6
+E 8 1 8
+E 8 2 11
+E 8 7 1
+E 8 9 7
+E 9 3 2
+E 9 7 6
+E 9 8 7
+End
+
+EOF

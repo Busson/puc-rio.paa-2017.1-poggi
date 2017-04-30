@@ -1,15 +1,13 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <glib.h>
+#include <stdlib.h>
  
-#define V 9
- 
-int 
-minDistance(int dist[], int sptSet[])
-{
+guint32 
+get_min_distance(guint32* dist, guint32* sptSet, guint32 nV){
     int min = INT_MAX, min_index;
- 
-    for (int v = 0; v < V; v++)
+    for (int v = 0; v < nV; v++)
         if (sptSet[v] == 0 && dist[v] <= min)
             min = dist[v], min_index = v;
  
@@ -17,65 +15,63 @@ minDistance(int dist[], int sptSet[])
 }
 
 void 
-printPath(int parent[], int j)
-{
+print_path(guint32*  parent, guint32 j){
     if (parent[j]==-1)
         return;
  
-    printPath(parent, parent[j]);
+    print_path(parent, parent[j]);
     printf("%d ", j);
 }
  
 void
-printSolution(int dist[], int n, int parent[])
-{
+print_solution(guint32* dist, guint32 nV, guint32*  parent){
     int src = 0;
     printf("Vertex\t  Distance\tPath");
-    for (int i = 1; i < V; i++)
-    {
+    for (int i = 1; i < nV; i++){
         printf("\n%d -> %d \t\t %d\t\t%d ", src, i, dist[i], src);
-        printPath(parent, i);
+        print_path(parent, i);
     }
 }
 
-void dijkstra(int graph[V][V], int src)
-{
-    int dist[V];  
-    int sptSet[V];
-    int parent[V];
- 
-    for (int i = 0; i < V; i++)
-    {
-        parent[0] = -1;
+void 
+initialize_vectors(guint32* dist, guint32* sptSet, guint32* parent, guint32 nV){
+    for (int i = 0; i < nV; i++){
+        parent[i] = -1;
         dist[i] = INT_MAX;
         sptSet[i] = 0;
     }
- 
+} 
+
+void 
+dijkstra(int graph[9][9], guint32 src, guint32 nV){
+
+    guint32 *dist = malloc((sizeof(guint32))*nV);
+    guint32 *sptSet = malloc((sizeof(guint32))*nV);
+    guint32 *parent = malloc((sizeof(guint32))*nV);
     
+    initialize_vectors(dist,sptSet,parent,nV);
+
     dist[src] = 0;
 
-    for (int count = 0; count < V-1; count++)
-    {
-        int u = minDistance(dist, sptSet);
+    for (guint32 count = 0; count < nV-1; count++){
+        guint32 u = get_min_distance(dist, sptSet,nV);
 
         sptSet[u] = 1;
 
-        for (int v = 0; v < V; v++)
-        
+        for (guint32 v = 0; v < nV; v++)
             if (!sptSet[v] && graph[u][v]>-1 &&
-                dist[u] + graph[u][v] < dist[v])
-            {
+                dist[u] + graph[u][v] < dist[v]){
                 parent[v]  = u;
                 dist[v] = dist[u] + graph[u][v];
             }  
     }
 
-    printSolution(dist, V, parent);
+    print_solution(dist, nV, parent);
 }
 
 int main(){
-    
-    int graph[V][V] = {{-1, 4, -1, -1, -1, -1, -1, 8, -1},
+
+    int graph[9][9] = {{-1, 4, -1, -1, -1, -1, -1, 8, -1},
                        {4, -1, 8, -1, -1, -1, -1, 11, -1},
                        {-1, 8, -1, 7, -1, 4, -1, -1, 2},
                        {-1, -1, 7, -1, 9, 14, -1, -1, -1},
@@ -86,7 +82,7 @@ int main(){
                        {-1, -1, 2, -1, -1, -1, 6, 7, -1}
                       };
  
-    dijkstra(graph, 0);
+    dijkstra(graph, 0, 9);
  
     return 0;
 }
