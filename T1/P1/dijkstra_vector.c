@@ -28,7 +28,10 @@ void
 print_solution(gint64* dist, gint64 nV, gint64*  parent, guint32 src){
     printf("Vertex\t  Distance\tPath");
     for (gint64 i = 1; i < nV; i++){
-        printf("\n%d -> %ld \t\t %ld\t\t%d ", src, i, dist[i], src);
+        if(dist[i]==INT_MAX)
+          printf("\n%d -> %ld \t\t INF\t\t", src, i);
+        else 
+          printf("\n%d -> %ld \t\t %ld\t\t%d ", src, i, dist[i], src);
         print_path(parent, i);
     }
 }
@@ -76,10 +79,10 @@ int main(){
     STP_DOCUMENT *doc = stp_new();  
     stp_get_content(doc, "input/sample.stp");
    
-    printf("SECTION Graph\nNodes %d\nEdges %d\n", doc->nodes, doc->edges);
+  /*  printf("SECTION Graph\nNodes %d\nEdges %d\n", doc->nodes, doc->edges);
     gint64 i; for(i=0; i< doc->edges; i++){
       printf("E %d %d %d\n", doc->e[i].node1,doc->e[i].node2,doc->e[i].c); 
-    }
+    } */
  
     dijkstra(doc, 9, doc->nodes+1);
  
