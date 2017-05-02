@@ -4,7 +4,8 @@
 #include <glib.h>
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
- 
+#include "fibonacci_heap/heap.h"
+
 gint64 
 get_min_distance(gint64* dist, gint64* sptSet, gint64 nV){
     int min = INT_MAX, min_index;
@@ -75,20 +76,32 @@ dijkstra(STP_DOCUMENT *doc, gint64 src, gint64 nV){
     print_solution(dist, nV, parent, src);
 }
 
-//compile
-//cc stp/stp_reader.c dijkstra_vector.c `pkg-config --cflags --libs glib-2.0 gobject-2.0 gio-2.0` -o dijkstra
+void print_data(data d){
+    printf("%d\n", d.key);
+}
 
-int main(int argc, char *argv[]){
-    
-    STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
-   
-  /*  printf("SECTION Graph\nNodes %d\nEdges %d\n", doc->nodes, doc->edges);
-    gint64 i; for(i=0; i< doc->edges; i++){
-      printf("E %d %d %d\n", doc->e[i].node1,doc->e[i].node2,doc->e[i].c); 
-    } */
- 
-    dijkstra(doc, 9, doc->nodes+1);
- 
+int main(){
+    heap* myheap = heap_init();
+
+    int maxKey = 100000; //100 to 100 thousand by power of 10
+    for (int i = 0; i<maxKey; i+=5){
+        heap_insert(&myheap, i, NULL);
+    }
+    for (int i = 1; i<maxKey; i+=5){
+        heap_insert(&myheap, i, NULL);
+    }
+    for (int i = 2; i<maxKey; i+=5){
+        heap_insert(&myheap, i, NULL);
+    }
+    for (int i = 3; i<maxKey; i+=5){
+        heap_insert(&myheap, i, NULL);
+    }
+    for (int i = 4; i<maxKey; i+=5){
+        heap_insert(&myheap, i, NULL);
+    }
+    while (!is_empty(myheap)){
+        print_data(heap_extract_min(&myheap));
+    }
+    heap_free(&myheap);
     return 0;
 }
