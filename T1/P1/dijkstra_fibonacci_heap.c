@@ -1,10 +1,39 @@
 
 #include <stdio.h>
 #include <limits.h>
-#include <glib.h>
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
 #include "fibonacci_heap/heap.h"
+
+
+dijkstra_vertice *
+create_node_vertice(gint64 value,guint32 nV){
+   dijkstra_vertice* v = malloc(sizeof(dijkstra_vertice));
+   v->value = value;
+   v->dist= INT_MAX;
+   v->parent = -1;
+   v->sptSet =0;
+   v->sdjCount=0;
+   v->adjs = malloc(sizeof(dijkstra_vertice *)*nV);
+   v->weights = malloc(sizeof(gint64)*nV);
+   for(guint32 i=0; i< nV; i++){
+     v->adjs[i]=NULL;
+     v->weights[i]=0;
+   }
+   return v;
+}
+
+void
+insert_adj_in_node(dijkstra_vertice *v,dijkstra_vertice *w, gint64 p, guint32 nV){
+   for(guint32 i=0; i< nV; i++){
+     if(v->adjs[i]==NULL){
+         v->adjs[i]= w;
+         v->sdjCount++;
+         v->weights[i]=p;
+         break;
+     }
+   }
+}
 
 gint64 
 get_min_distance(gint64* dist, gint64* sptSet, gint64 nV){
@@ -26,82 +55,77 @@ print_path(gint64*  parent, gint64 j){
 }
  
 void
-print_solution(gint64* dist, gint64 nV, gint64*  parent, guint32 src){
+print_solution(dijkstra_vertice ** dv, gint64 nV, gint64*  parent, guint32 src){
     printf("Vertex\t  Distance\tPath");
     for (gint64 i = 1; i < nV; i++){
-        if(dist[i]==INT_MAX)
+        if(dv[i]->dist ==INT_MAX)
           printf("\n%d -> %ld \t\t INF\t\t", src, i);
         else 
-          printf("\n%d -> %ld \t\t %ld\t\t%d ", src, i, dist[i], src);
+          printf("\n%d -> %ld \t\t %ld\t\t%d ", src, i, dv[i]->dist, src);
         print_path(parent, i);
     }
 }
 
 void 
-initialize_vectors(gint64* dist, gint64* sptSet, gint64* parent, gint64 nV){
+initialize_vector(gint64* parent, gint64 nV){
     for (int i = 0; i < nV; i++){
         parent[i] = -1;
-        dist[i] = INT_MAX;
-        sptSet[i] = 0;
     }
 } 
 
-
 void 
-dijkstra(STP_DOCUMENT *doc, gint64 src, gint64 nV){
-
-    gint64 *dist = malloc((sizeof(gint64))*nV);
-    gint64 *sptSet = malloc((sizeof(gint64))*nV);
+dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
     gint64 *parent = malloc((sizeof(gint64))*nV);
+    initialize_vector(parent,nV);
+    dv[src]->dist=0;
+    heap_insert(&heap,dv[src]->dist,dv[src]);
     
-    initialize_vectors(dist,sptSet,parent,nV);
+    while (!is_empty(heap)){
+        //O(Log(n))
+       dijkstra_vertice * v = dv[((dijkstra_vertice *)heap_extract_min(&heap).value)->value] ;
+        v->sptSet=1;
 
-    dist[src] = 0;
-
-    for (gint64 count = 0; count < nV-1; count++){
-        gint64 u = get_min_distance(dist, sptSet,nV);
-
-        sptSet[u] = 1;
-        
-        //for earch edge
-        for(gint64 v=0; v< doc->edges; v++)
-            if(doc->e[v].node1==u && !sptSet[doc->e[v].node2]
-               && dist[doc->e[v].node1] + doc->e[v].c < dist[doc->e[v].node2]){
-                parent[doc->e[v].node2] = doc->e[v].node1;
-                dist[doc->e[v].node2] = dist[doc->e[v].node1] + doc->e[v].c; 
-            }
-
+       for(guint32 i=0;i< v->sdjCount;i++){
+           dijkstra_vertice * w = dv[v->adjs[i]->value];
+           if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
+                w->dist = v->dist + v->weights[i];
+                parent[w->value] = v->value;
+                heap_insert(&heap,w->dist,dv[w->value]);
+           } 
+       }
     }
 
-    print_solution(dist, nV, parent, src);
+
+
+    print_solution(dv, nV, parent, src);
 }
 
 void print_data(data d){
     printf("%d\n", d.key);
 }
 
-int main(){
-    heap* myheap = heap_init();
 
-    int maxKey = 100000; //100 to 100 thousand by power of 10
-    for (int i = 0; i<maxKey; i+=5){
-        heap_insert(&myheap, i, NULL);
+int main(){
+
+    STP_DOCUMENT *doc = stp_new();  
+    stp_get_content(doc, "input/sample.stp");
+
+    heap* myheap = heap_init();
+    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+
+    for(guint32 i=0; i< doc->nodes+1; i++){
+        dv[i] = create_node_vertice(i,doc->nodes+1);
     }
-    for (int i = 1; i<maxKey; i+=5){
-        heap_insert(&myheap, i, NULL);
+
+    for(gint64 i=0; i< doc->edges; i++){
+       insert_adj_in_node(dv[doc->e[i].node1],
+                          dv[doc->e[i].node2],
+                          doc->e[i].c,
+                          doc->nodes+1);
     }
-    for (int i = 2; i<maxKey; i+=5){
-        heap_insert(&myheap, i, NULL);
-    }
-    for (int i = 3; i<maxKey; i+=5){
-        heap_insert(&myheap, i, NULL);
-    }
-    for (int i = 4; i<maxKey; i+=5){
-        heap_insert(&myheap, i, NULL);
-    }
-    while (!is_empty(myheap)){
-        print_data(heap_extract_min(&myheap));
-    }
+ 
+    dijkstra(myheap,dv,9,doc->nodes+1);
+
     heap_free(&myheap);
     return 0;
 }

@@ -4,6 +4,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <glib.h>
+
+struct dijkstra_vertice_s{ 
+  gint64 value;
+  gint64 dist;  
+  gint64 parent;
+  gint64 sptSet;   
+  guint32 sdjCount;
+  struct dijkstra_vertice_s ** adjs;
+  gint64* weights;
+};
+
+typedef struct dijkstra_vertice_s dijkstra_vertice;
+
 
 typedef struct{
     int key;     // Indicates the minimum
