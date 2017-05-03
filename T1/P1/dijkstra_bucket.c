@@ -3,8 +3,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
-#include "fibonacci_heap/heap.h"
-
+#include "bucket/bucket.h"
 
 dijkstra_vertice *
 create_node_vertice(gint64 value,guint32 nV){
@@ -67,30 +66,35 @@ print_solution(dijkstra_vertice ** dv, gint64 nV, gint64*  parent, guint32 src){
 }
 
 void 
-initialize_vector(gint64* parent, gint64 nV){
+initialize_vector(gint64* parent,gint32 nV){
     for (int i = 0; i < nV; i++){
         parent[i] = -1;
     }
 } 
 
-void 
-dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
-    gint64 *parent = malloc((sizeof(gint64))*nV);
-    initialize_vector(parent,nV);
-    dv[src]->dist=0;
-    heap_insert(&heap,dv[src]->dist,dv[src]);
-    
-    while (!is_empty(heap)){
-       
-       dijkstra_vertice * v = dv[((dijkstra_vertice *)heap_extract_min(&heap).value)->value] ;
-        v->sptSet=1;
 
+void 
+dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
+
+    gint64 *parent = malloc((sizeof(gint64))*nV);
+    
+    initialize_vector(parent,nV);
+
+    dv[src]->dist=0;
+    bucket_add(buc, dv[src]);
+
+    while(!bucket_is_empty(buc)){
+                 
+       dijkstra_vertice* v = bucket_remove_min(buc);
+       if(v==NULL)continue;
+       v->sptSet=1;
+       
        for(guint32 i=0;i< v->sdjCount;i++){
            dijkstra_vertice * w = dv[v->adjs[i]->value];
            if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
                 parent[w->value] = v->value;
-                heap_insert(&heap,w->dist,dv[w->value]);
+                bucket_add(buc, dv[w->value]);
            } 
        }
     }
@@ -98,19 +102,14 @@ dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
     print_solution(dv, nV, parent, src);
 }
 
-void print_data(data d){
-    printf("%d\n", d.key);
-}
-
-
-int main(){
-
+int main(int argc, char *argv[]){
+    
     STP_DOCUMENT *doc = stp_new();  
     stp_get_content(doc, "input/sample.stp");
-  // stp_get_content(doc, "input/ALUE/alue2087.stp");
+    //  stp_get_content(doc, "input/ALUE/alue2087.stp");
 
-    heap* myheap = heap_init();
-    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+    guint32 totalC=0;
+     dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
         dv[i] = create_node_vertice(i,doc->nodes+1);
@@ -121,10 +120,12 @@ int main(){
                           dv[doc->e[i].node2],
                           doc->e[i].c,
                           doc->nodes+1);
-    }
+       totalC+=doc->e[i].c;                   
+    } 
+    
+    bucket * buc = create_bucket(totalC);
  
-    dijkstra(myheap,dv,9,doc->nodes+1);
-
-    heap_free(&myheap);
+    dijkstra(buc, dv, 1, doc->nodes+1);
+ 
     return 0;
 }
