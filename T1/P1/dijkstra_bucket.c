@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
     //  stp_get_content(doc, "input/ALUE/alue2087.stp");
 
     guint32 totalC=0;
-     dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
         dv[i] = create_node_vertice(i,doc->nodes+1);
