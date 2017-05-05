@@ -75,31 +75,29 @@ initialize_parent(gint64* parent, gint64 nV){
 void 
 dijkstra(alpha_tree_t *tree, dijkstra_vertice **dv, gint64 src, gint64 nV){
      
-    gint64 *parent = malloc((sizeof(gint64))*nV);
-    initialize_parent(parent, nV);
+     gint64 *parent = malloc((sizeof(gint64))*nV);
+     initialize_parent(parent, nV);
 
      dv[src]->dist=0;
      alpha_insert(tree, dv[src]);  
 
-     while(TRUE){
-        
+     while(!tree->is_empty){
         dijkstra_vertice* v = get_min_node_alpha(tree);
-        if(v!=NULL) printf("peguei o %d \n",v->value);
-        else break;
+        if(v==NULL)
+             break;
 
         v->sptSet=1;
+
+     //   printf("peguei %d \n", v->value);
        
         for(guint32 i=0;i< v->sdjCount;i++){
            dijkstra_vertice * w = dv[v->adjs[i]->value];
-           if(v->dist + v->weights[i] < w->dist ){
+           if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
                 parent[w->value] = v->value;
                 alpha_insert(tree, dv[w->value]);
            } 
         } 
-
-       
-  
      }
      print_solution(dv, nV, parent, src);
 } 
@@ -109,8 +107,8 @@ dijkstra(alpha_tree_t *tree, dijkstra_vertice **dv, gint64 src, gint64 nV){
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
-  // stp_get_content(doc, "input/ALUE/alue2087.stp");
+ //   stp_get_content(doc, "input/sample.stp");
+   stp_get_content(doc, "input/ALUE/alue2087.stp");
     
     alpha_tree_t *tree = NULL;
     tree = alpha_create();
@@ -129,6 +127,11 @@ int main(int argc, char *argv[]){
     } 
 
     dijkstra(tree,dv, 1, doc->nodes+1);
+    
+    printf("\n\nTotal nodes: %d", doc->nodes);
+    printf("\nAlpha factor: %f",ALPHA_FACTOR );
+    printf("\nTotal balances: %d", balance_count);
+    printf("\nMax height: %d \n", max_height);
  
     return 0;
 }

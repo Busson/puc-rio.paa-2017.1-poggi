@@ -4,8 +4,10 @@
 
 #include <glib.h>
 
-#define ALPHA_FACTOR 0.5
+#define ALPHA_FACTOR 1.0
 
+guint32 max_height;
+guint32 balance_count;
 
 struct dijkstra_vertice_s{ 
   guint32 value;
@@ -30,15 +32,22 @@ struct alpha_node_s {
 typedef struct alpha_node_s alpha_node_t;
 
 struct alpha_tree_s {
+  gboolean is_empty;
 	struct alpha_node_s *root;
 };
 
 typedef struct alpha_tree_s alpha_tree_t;
 
+typedef struct{
+   gint32 min;
+   gint32 min_index;
+   dijkstra_vertice *v;
+}node_it;
+
 alpha_tree_t* alpha_create();
 
 void alpha_insert(alpha_tree_t* tree, dijkstra_vertice* v);
 
-dijkstra_vertice* get_min_node_alpha(alpha_tree_t* tree);
+dijkstra_vertice * get_min_node_alpha(alpha_tree_t* tree);
 
 #endif

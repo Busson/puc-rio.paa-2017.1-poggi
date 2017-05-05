@@ -3,11 +3,15 @@
 
 #include "alpha.h"
 
+guint32 max_height;
+guint32 balance_count;
+
 
 alpha_tree_t* 
 alpha_create(){
     alpha_tree_t *tree = malloc(sizeof(alpha_tree_t));
 	tree->root = NULL;
+	tree->is_empty=FALSE; 
 	return tree;	
 }
 
@@ -25,23 +29,43 @@ alpha_create_node() {
 	return node;	
 }
 
+void 
+for_earch_node(gpointer data, gpointer user_data){
+     dijkstra_vertice* v = (dijkstra_vertice*)data;
+	
+    if(v!=NULL) {
+		node_it* it = (node_it*)user_data;
+		if(v->sptSet == 0 && v->dist < it->min ){
+          it->min = v->dist;
+		  it->min_index = v->value;
+		  it->v = v;
+		}
+	}
+}
+
+
 void
 alpha_balance_node(alpha_node_t *node){
   
-   printf("balance: %p L: %p R: %p \n",node, node->left, node->right);
+ //  printf("balance: %p L: %p R: %p \n",node, node->left, node->right);
 
    if(node->left!=NULL){
-	   printf("balanceamento: %p - size %d | %p - size %d \n",node->left, node->left->size, node, (guint32)(ALPHA_FACTOR*node->size) );
+//	   printf("balanceamento L: %p - size %d | %p - size %d \n",node->left, node->left->size, node, (guint32)(ALPHA_FACTOR*node->size) );
 	   if(node->left->size > (guint32)(ALPHA_FACTOR*node->size) ){
+		  balance_count++; /* debug */
+	//	  printf("balance\n");
 		  alpha_balance_node(node->left); 
-		  GSList * l = g_slist_last(node->left->vertices);
-          dijkstra_vertice* v = (dijkstra_vertice*)l->data;
-          if(v!=NULL){
-			node->left->vertices = g_slist_remove(node->left->vertices,v);
+		  node_it* it = malloc(sizeof(node_it));
+   		  it->min=INT_MAX;
+  		  it->min_index=-1;
+ 		  it->v= NULL;
+		  g_slist_foreach(node->left->vertices, (GFunc)for_earch_node, it);
+          if(it->v!=NULL){
+			node->left->vertices = g_slist_remove(node->left->vertices, it->v);
 			node->left->count--;
-			node->vertices = g_slist_append(node->vertices, v); 
+			node->vertices = g_slist_append(node->vertices, it->v); 
 			node->count++;
-			printf("roubei o %d \n",v->value);
+//			printf("roubei o %d \n",v->value);
 		  }
 		  else{
 			node->left=NULL;  
@@ -50,42 +74,50 @@ alpha_balance_node(alpha_node_t *node){
    }
 
    if(node->right!=NULL){
-	   printf("balanceamento: %p - size %d | %p - size %d \n",node->right, node->right->size, node, (guint32)(ALPHA_FACTOR*node->size) );
+//	   printf("balanceamento R: %p - size %d | %p - size %d \n",node->right, node->right->size, node, (guint32)(ALPHA_FACTOR*node->size) );
 	   if(node->right->size > (guint32)(ALPHA_FACTOR*node->size) ){
+		  balance_count++; /* debug */
+	//	  printf("balance\n");
           alpha_balance_node(node->right); 
-		  GSList * l = g_slist_last(node->right->vertices);
-          dijkstra_vertice* v = (dijkstra_vertice*)l->data;
-          if(v!=NULL){
-			node->right->vertices = g_slist_remove(node->left->vertices,v);
-			node->left->count--;
-			node->vertices = g_slist_append(node->vertices, v); 
+		  node_it* it = malloc(sizeof(node_it));
+   		  it->min=INT_MAX;
+  		  it->min_index=-1;
+ 		  it->v= NULL;
+		  g_slist_foreach(node->right->vertices, (GFunc)for_earch_node, it);
+          if(it->v!=NULL){
+			node->right->vertices = g_slist_remove(node->right->vertices,it->v);
+			node->right->count--;
+			node->vertices = g_slist_append(node->vertices, it->v); 
 			node->count++;
-			printf("roubei o %d \n",v->value);
+//			printf("roubei o %d \n",v->value);
 		  }
 		  else{
 			node->right=NULL;  
 		  } 
 	   }
    }
-       
+  //  printf("bal. end: %p", node);    
 }
 
 void 
-alpha_update_nodes_size(alpha_node_t* node){
+alpha_update_nodes_size(alpha_node_t* node, guint32 height){
     
 	if(node->left == NULL && node->right == NULL)
 	   node->size=1;
 
     guint32 size =1;
 	if(node->left!=NULL){
-		alpha_update_nodes_size(node->left);
-		size += node->left->size;
+	   alpha_update_nodes_size(node->left,++height);
+	   size += node->left->size;
 	}
 	if(node->right!=NULL){
-		alpha_update_nodes_size(node->right);
-		size += node->right->size;
+	   alpha_update_nodes_size(node->right,++height);
+	   size += node->right->size;
 	}   
     node->size=size; 
+	
+	if(height > max_height)
+	   max_height = height; 
 }
 
 void
@@ -94,7 +126,7 @@ alpha_balance(alpha_tree_t* tree){
       return;
 
    alpha_balance_node(tree->root);
-   alpha_update_nodes_size(tree->root);
+   alpha_update_nodes_size(tree->root,1);
 }
 
 void 
@@ -105,26 +137,35 @@ alpha_node_add(alpha_node_t *node, dijkstra_vertice* v){
 	 node->vertices = g_slist_append(node->vertices, v); 
 	 node->count++; 
 
-	 printf("add %d no %p - the size is %d \n",v->value,node, node->size );
+//	 printf("add %d no %p - the size is %d \n",v->value,node, node->size );
 }
 
+void 
+calcule_min_node(alpha_node_t* node, node_it* it){
+	 g_slist_foreach(node->vertices, (GFunc)for_earch_node, it);
+	 if(node->left!=NULL)
+       calcule_min_node(node->left, it);
+	 if(node->right!=NULL)
+	   calcule_min_node(node->right, it);
+}
 
 dijkstra_vertice* 
 get_min_node_alpha(alpha_tree_t* tree){
    alpha_node_t* target =  tree->root;
     
-   GSList * l = g_slist_last(target->vertices);
-   dijkstra_vertice* v = (dijkstra_vertice*)l->data;
-
-   if(v!=NULL){
-       target->vertices = g_slist_remove(target->vertices,v);  
-	    target->count--;
-		//update pivot       
-   }
-
-   alpha_balance(tree);
+ //  printf("node content: ");
+   node_it* it = malloc(sizeof(node_it));
+   it->min=INT_MAX;
+   it->min_index=-1;
+   it->v= NULL;
+   calcule_min_node(target, it);
+   if(it->min_index <0) tree->is_empty=TRUE;
    
-   return v;
+   if(it->v!=NULL){
+	   target->vertices = g_slist_remove(target->vertices,it->v);
+   }
+   
+   return it->v;
 }
 
 void
@@ -176,9 +217,9 @@ alpha_insert(alpha_tree_t* tree, dijkstra_vertice* v){
 		 // break;
 	   }        
 	}
-
+   
     alpha_node_add(target,v);	
-    alpha_update_nodes_size(tree->root);
+    alpha_update_nodes_size(tree->root,1);
 	alpha_balance(tree);
 }
 
