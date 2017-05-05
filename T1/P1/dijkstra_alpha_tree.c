@@ -6,11 +6,10 @@
 #include "alpha_tree/alpha.h"
 
 dijkstra_vertice *
-create_node_vertice(gint64 value,guint32 nV){
+create_node_vertice(gint64 value, guint32 nV){
    dijkstra_vertice* v = malloc(sizeof(dijkstra_vertice));
    v->value = value;
    v->dist= INT_MAX;
-   v->parent = -1;
    v->sptSet =0;
    v->sdjCount=0;
    v->adjs = malloc(sizeof(dijkstra_vertice *)*nV);
@@ -33,7 +32,7 @@ insert_adj_in_node(dijkstra_vertice *v,dijkstra_vertice *w, gint64 p, guint32 nV
      }
    }
 }
-
+/*
 alpha_node_t*
 get_min_distance_alpha(alpha_tree_t *tree, gint64 nV){
     int min = INT_MAX, min_index;
@@ -44,7 +43,7 @@ get_min_distance_alpha(alpha_tree_t *tree, gint64 nV){
      }
      return alpha_find( tree, min_index);
 }
-
+*/
 void 
 print_path(gint64*  parent, gint64 j){
     if (parent[j]==-1)
@@ -55,13 +54,13 @@ print_path(gint64*  parent, gint64 j){
 }
  
 void
-print_solution(alpha_tree_t *tree, gint64 nV, gint64*  parent, guint32 src){
+print_solution(dijkstra_vertice ** dv, gint64 nV, gint64*  parent, guint32 src){
     printf("Vertex\t  Distance\tPath");
     for (gint64 i = 1; i < nV; i++){
-        if(alpha_find( tree, i)->v->dist==INT_MAX)
+        if(dv[i]->dist ==INT_MAX)
           printf("\n%d -> %ld \t\t INF\t\t", src, i);
         else 
-          printf("\n%d -> %ld \t\t %ld\t\t%d ", src, i, alpha_find( tree, i)->v->dist, src);
+          printf("\n%d -> %ld \t\t %ld\t\t%d ", src, i, dv[i]->dist, src);
         print_path(parent, i);
     }
 }
@@ -74,29 +73,38 @@ initialize_parent(gint64* parent, gint64 nV){
 } 
 
 void 
-dijkstra(STP_DOCUMENT *doc, alpha_tree_t *tree, gint64 src, gint64 nV){
+dijkstra(alpha_tree_t *tree, dijkstra_vertice **dv, gint64 src, gint64 nV){
      
     gint64 *parent = malloc((sizeof(gint64))*nV);
     initialize_parent(parent, nV);
 
-    alpha_node_t* node =  alpha_find( tree, src ); 
-    node->v->dist = 0;
-      
-    for (gint64 count = 0; count < nV-1; count++){
-        node =  get_min_distance_alpha(tree,nV);
-        if(node==NULL)continue;
-        node->v->sptSet=1;
-    
-        for(guint32 i=0;i<node->v->sdjCount;i++){
-            if(!node->v->adjs[i]->sptSet && node->v->dist + node->v->weights[i] < node->v->adjs[i]->dist ){
-            node->v->adjs[i]->dist = node->v->dist + node->v->weights[i]; 
-            parent[node->v->adjs[i]->value] = node->value;
-            }
-        }
-     }
+     dv[src]->dist=0;
+     alpha_insert(tree, dv[src]);  
 
-    print_solution(tree, nV, parent, src);
-}
+     while(TRUE){
+        
+        dijkstra_vertice* v = get_min_node_alpha(tree);
+        if(v!=NULL) printf("peguei o %d \n",v->value);
+        else break;
+
+        v->sptSet=1;
+       
+        for(guint32 i=0;i< v->sdjCount;i++){
+           dijkstra_vertice * w = dv[v->adjs[i]->value];
+           if(v->dist + v->weights[i] < w->dist ){
+                w->dist = v->dist + v->weights[i];
+                parent[w->value] = v->value;
+                alpha_insert(tree, dv[w->value]);
+           } 
+        } 
+
+       
+  
+     }
+     print_solution(dv, nV, parent, src);
+} 
+
+
 
 int main(int argc, char *argv[]){
     
@@ -106,20 +114,21 @@ int main(int argc, char *argv[]){
     
     alpha_tree_t *tree = NULL;
     tree = alpha_create();
-    
+
+    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+
     for(guint32 i=0; i< doc->nodes+1; i++){
-       alpha_insert( tree, i, create_node_vertice(i,doc->nodes+1));
+        dv[i] = create_node_vertice(i,doc->nodes+1);
     }
 
     for(gint64 i=0; i< doc->edges; i++){
-     // printf("E %d %d %d\n",doc->e[i].node1,doc->e[i].node2,doc->e[i].c); 
-        insert_adj_in_node(alpha_find( tree,  doc->e[i].node1 )->v, 
-                         alpha_find( tree, doc->e[i].node2 )->v,
-                         doc->e[i].c,
-                         doc->nodes+1);               
-    }
+       insert_adj_in_node(dv[doc->e[i].node1],
+                          dv[doc->e[i].node2],
+                          doc->e[i].c,
+                          doc->nodes+1);                                     
+    } 
 
-    dijkstra(doc, tree, 1, doc->nodes+1);
+    dijkstra(tree,dv, 1, doc->nodes+1);
  
     return 0;
 }

@@ -109,9 +109,6 @@ dijkstra(dijkstra_vertice **dv, gint64 src, gint64 nV){
     print_solution(dv, nV, parent, src);
 }
 
-//compile
-//cc stp/stp_reader.c dijkstra_vector.c `pkg-config --cflags --libs glib-2.0 gobject-2.0 gio-2.0` -o dijkstra
-
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  

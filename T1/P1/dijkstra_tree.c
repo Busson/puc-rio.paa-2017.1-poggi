@@ -76,7 +76,7 @@ initialize_parent(gint64* parent, gint64 nV){
 } 
 
 void 
-dijkstra(STP_DOCUMENT *doc, avl_tree_t *tree, gint64 src, gint64 nV){
+dijkstra( avl_tree_t *tree, gint64 src, gint64 nV){
      
     gint64 *parent = malloc((sizeof(gint64))*nV);
     initialize_parent(parent, nV);
@@ -120,8 +120,9 @@ int main(int argc, char *argv[]){
                          doc->e[i].c,
                          doc->nodes+1);               
     }
-
-    dijkstra(doc, tree, 1, doc->nodes+1);
+  
+ // avl_traverse_dfs( tree );
+     dijkstra(tree, 1, doc->nodes+1);
  
     return 0;
 }

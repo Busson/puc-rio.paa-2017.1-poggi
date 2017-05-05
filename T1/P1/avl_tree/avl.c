@@ -6,7 +6,6 @@
 
 #include "avl.h"
 
-/* Create a new AVL tree. */
 avl_tree_t *avl_create() {
 	avl_tree_t *tree = NULL;
 
@@ -19,7 +18,6 @@ avl_tree_t *avl_create() {
 	return tree;
 }
 
-/* Initialize a new node. */
 avl_node_t *avl_create_node() {
 	avl_node_t *node = NULL;
 	
@@ -29,12 +27,11 @@ avl_node_t *avl_create_node() {
 
 	node->left = NULL;
 	node->right = NULL;
-	node->value = 0;
+	node->value = INT_MAX;
 
 	return node;	
 }
 
-/* Find the height of an AVL node recursively */
 int avl_node_height( avl_node_t *node ) {
 	int height_left = 0;
 	int height_right = 0;
@@ -45,7 +42,7 @@ int avl_node_height( avl_node_t *node ) {
 	return height_right > height_left ? ++height_right : ++height_left;
 }
 
-/* Find the balance of an AVL node */
+
 int avl_balance_factor( avl_node_t *node ) {
 	int bf = 0;
 
@@ -55,7 +52,7 @@ int avl_balance_factor( avl_node_t *node ) {
 	return bf ;
 }
 
-/* Left Left Rotate */
+
 avl_node_t *avl_rotate_leftleft( avl_node_t *node ) {
  	avl_node_t *a = node;
 	avl_node_t *b = a->left;
@@ -66,7 +63,7 @@ avl_node_t *avl_rotate_leftleft( avl_node_t *node ) {
 	return( b );
 }
 
-/* Left Right Rotate */
+
 avl_node_t *avl_rotate_leftright( avl_node_t *node ) {
 	avl_node_t *a = node;
 	avl_node_t *b = a->left;
@@ -80,7 +77,7 @@ avl_node_t *avl_rotate_leftright( avl_node_t *node ) {
 	return( c );
 }
 
-/* Right Left Rotate */
+
 avl_node_t *avl_rotate_rightleft( avl_node_t *node ) {
 	avl_node_t *a = node;
 	avl_node_t *b = a->right;
@@ -94,7 +91,7 @@ avl_node_t *avl_rotate_rightleft( avl_node_t *node ) {
 	return( c );
 }
 
-/* Right Right Rotate */
+
 avl_node_t *avl_rotate_rightright( avl_node_t *node ) {
 	avl_node_t *a = node;
 	avl_node_t *b = a->right;
@@ -105,11 +102,11 @@ avl_node_t *avl_rotate_rightright( avl_node_t *node ) {
 	return( b );
 }
 
-/* Balance a given node */
+
 avl_node_t *avl_balance_node( avl_node_t *node ) {
 	avl_node_t *newroot = NULL;
 
-	/* Balance our children, if they exist. */
+	
 	if( node->left )
 		node->left  = avl_balance_node( node->left  );
 	if( node->right ) 
@@ -142,7 +139,7 @@ avl_node_t *avl_balance_node( avl_node_t *node ) {
 	return( newroot );	
 }
 
-/* Balance a given tree */
+
 void avl_balance( avl_tree_t *tree ) {
 
 	avl_node_t *newroot = NULL;
@@ -154,20 +151,23 @@ void avl_balance( avl_tree_t *tree ) {
 	}
 }
 
-/* Insert a new node. */
-void avl_insert( avl_tree_t *tree, int value, dijkstra_vertice* v) {
+
+void 
+avl_insert( avl_tree_t *tree, guint32 value, dijkstra_vertice* v) {
+	 
 	avl_node_t *node = NULL;
 	avl_node_t *next = NULL;
 	avl_node_t *last = NULL;
-
-	/* Well, there must be a first case */ 	
+   
+  
+ 	
 	if( tree->root == NULL ) {
 		node = avl_create_node();
 		node->value = value;
         node->v = v;
 		tree->root = node;
 
-	/* Okay.  We have a root already.  Where do we put this? */
+	
 	} else {
 		next = tree->root;
 
@@ -180,12 +180,13 @@ void avl_insert( avl_tree_t *tree, int value, dijkstra_vertice* v) {
 			} else if( value > next->value ) {
 				next = next->right;
 
-			/* Have we already inserted this node? */
 			} else if( value == next->value ) {
-				/* This shouldn't happen. */	
+					
+			
 			}
 		}
-
+         
+		 
 		node = avl_create_node();
 		node->value = value;
         node->v = v;
@@ -198,7 +199,8 @@ void avl_insert( avl_tree_t *tree, int value, dijkstra_vertice* v) {
 	avl_balance( tree );
 }
 
-/* Find the node containing a given value */
+
+
 avl_node_t *avl_find( avl_tree_t *tree, int value ) {
 	avl_node_t *current = tree->root;
 
@@ -212,7 +214,7 @@ avl_node_t *avl_find( avl_tree_t *tree, int value ) {
 	return current;
 }
 
-/* Do a depth first traverse of a node. */
+
 void avl_traverse_node_dfs( avl_node_t *node, int depth ) {
 	int i = 0;
 
@@ -224,7 +226,7 @@ void avl_traverse_node_dfs( avl_node_t *node, int depth ) {
 	if( node->right ) avl_traverse_node_dfs( node->right, depth + 2 );
 }
 
-/* Do a depth first traverse of a tree. */
+
 void avl_traverse_dfs( avl_tree_t *tree ) {
 	avl_traverse_node_dfs( tree->root, 0 );
 }

@@ -4,7 +4,6 @@
 
 #include <glib.h>
 
-#define _XOPEN_SOURCE 500 /* Enable certain library functions (strdup) on linux. See feature_test_macros(7) */
 
 struct dijkstra_vertice_s{ 
   gint64 value;
@@ -21,7 +20,7 @@ typedef struct dijkstra_vertice_s dijkstra_vertice;
 struct avl_node_s {
 	struct avl_node_s *left;
 	struct avl_node_s *right;
-	int value;
+	guint32 value;
     struct dijkstra_vertice_s* v;
 };
 
@@ -36,7 +35,7 @@ typedef struct avl_tree_s avl_tree_t;
 
 avl_tree_t *avl_create();
 
-void avl_insert( avl_tree_t *tree, int value, dijkstra_vertice* v);
+void avl_insert( avl_tree_t *tree, guint32 value, dijkstra_vertice* v);
 
 void avl_traverse_dfs( avl_tree_t *tree );
 

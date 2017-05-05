@@ -1,228 +1,186 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <limits.h>
-#include <string.h>
-#include <assert.h>
 
 #include "alpha.h"
 
-/* Create a new AVL tree. */
-alpha_tree_t *alpha_create() {
-	alpha_tree_t *tree = NULL;
 
-	if( ( tree = malloc( sizeof( alpha_tree_t ) ) ) == NULL ) {
-		return NULL;
-	}
-
+alpha_tree_t* 
+alpha_create(){
+    alpha_tree_t *tree = malloc(sizeof(alpha_tree_t));
 	tree->root = NULL;
-	return tree;
+	return tree;	
 }
 
-/* Initialize a new node. */
-alpha_node_t *alpha_create_node() {
-	alpha_node_t *node = NULL;
+alpha_node_t*
+alpha_create_node() {
+	alpha_node_t *node = malloc(sizeof(alpha_node_t));
 	
-	if( ( node = malloc( sizeof( alpha_node_t ) ) ) == NULL ) {
-		return NULL;
-	}
-
+	node->size = 1;
+	node->count =0;
+	node->pivot =0;
 	node->left = NULL;
 	node->right = NULL;
-	node->value = 0;
+	node->vertices = g_slist_alloc ();
 
 	return node;	
 }
 
-/* Find the height of an ALPHA node recursively */
-int alpha_node_height( alpha_node_t *node ) {
-	int height_left = 0;
-	int height_right = 0;
+void
+alpha_balance_node(alpha_node_t *node){
+  
+   printf("balance: %p L: %p R: %p \n",node, node->left, node->right);
 
-	if( node->left ) height_left = alpha_node_height( node->left );
-	if( node->right ) height_right = alpha_node_height( node->right );
+   if(node->left!=NULL){
+	   printf("balanceamento: %p - size %d | %p - size %d \n",node->left, node->left->size, node, (guint32)(ALPHA_FACTOR*node->size) );
+	   if(node->left->size > (guint32)(ALPHA_FACTOR*node->size) ){
+		  alpha_balance_node(node->left); 
+		  GSList * l = g_slist_last(node->left->vertices);
+          dijkstra_vertice* v = (dijkstra_vertice*)l->data;
+          if(v!=NULL){
+			node->left->vertices = g_slist_remove(node->left->vertices,v);
+			node->left->count--;
+			node->vertices = g_slist_append(node->vertices, v); 
+			node->count++;
+			printf("roubei o %d \n",v->value);
+		  }
+		  else{
+			node->left=NULL;  
+		  }
+	   }
+   }
 
-	return height_right > height_left ? ++height_right : ++height_left;
+   if(node->right!=NULL){
+	   printf("balanceamento: %p - size %d | %p - size %d \n",node->right, node->right->size, node, (guint32)(ALPHA_FACTOR*node->size) );
+	   if(node->right->size > (guint32)(ALPHA_FACTOR*node->size) ){
+          alpha_balance_node(node->right); 
+		  GSList * l = g_slist_last(node->right->vertices);
+          dijkstra_vertice* v = (dijkstra_vertice*)l->data;
+          if(v!=NULL){
+			node->right->vertices = g_slist_remove(node->left->vertices,v);
+			node->left->count--;
+			node->vertices = g_slist_append(node->vertices, v); 
+			node->count++;
+			printf("roubei o %d \n",v->value);
+		  }
+		  else{
+			node->right=NULL;  
+		  } 
+	   }
+   }
+       
 }
 
-/* Find the balance of an ALPHA node */
-int alpha_balance_factor( alpha_node_t *node ) {
-	int bf = 0;
+void 
+alpha_update_nodes_size(alpha_node_t* node){
+    
+	if(node->left == NULL && node->right == NULL)
+	   node->size=1;
 
-	if( node->left  ) bf += alpha_node_height( node->left );
-	if( node->right ) bf -= alpha_node_height( node->right );
-
-	return bf ;
-}
-
-/* Left Left Rotate */
-alpha_node_t *alpha_rotate_leftleft( alpha_node_t *node ) {
- 	alpha_node_t *a = node;
-	alpha_node_t *b = a->left;
-	
-	a->left = b->right;
-	b->right = a;
-
-	return( b );
-}
-
-/* Left Right Rotate */
-alpha_node_t *alpha_rotate_leftright( alpha_node_t *node ) {
-	alpha_node_t *a = node;
-	alpha_node_t *b = a->left;
-	alpha_node_t *c = b->right;
-	
-	a->left = c->right;
-	b->right = c->left; 
-	c->left = b;
-	c->right = a;
-
-	return( c );
-}
-
-/* Right Left Rotate */
-alpha_node_t *alpha_rotate_rightleft( alpha_node_t *node ) {
-	alpha_node_t *a = node;
-	alpha_node_t *b = a->right;
-	alpha_node_t *c = b->left;
-	
-	a->right = c->left;
-	b->left = c->right; 
-	c->right = b;
-	c->left = a;
-
-	return( c );
-}
-
-/* Right Right Rotate */
-alpha_node_t *alpha_rotate_rightright( alpha_node_t *node ) {
-	alpha_node_t *a = node;
-	alpha_node_t *b = a->right;
-	
-	a->right = b->left;
-	b->left = a; 
-
-	return( b );
-}
-
-/* Balance a given node */
-alpha_node_t *alpha_balance_node( alpha_node_t *node ) {
-	alpha_node_t *newroot = NULL;
-
-	/* Balance our children, if they exist. */
-	if( node->left )
-		node->left  = alpha_balance_node( node->left  );
-	if( node->right ) 
-		node->right = alpha_balance_node( node->right );
-
+    guint32 size =1;
 	if(node->left!=NULL){
-		if( node->value*ALPHA_FACTOR < node->left->value ) {
-			/* Left Heavy */	
-			if( alpha_balance_factor( node->left ) <= -1 ) 
-				newroot = alpha_rotate_leftright( node );
-			else 
-				newroot = alpha_rotate_leftleft( node );
-
-		}  
+		alpha_update_nodes_size(node->left);
+		size += node->left->size;
 	}
-	if(node->right!=NULL){	
-		if( node->value*ALPHA_FACTOR < node->right->value ) {
-			/* Right Heavy */
-			if( alpha_balance_factor( node->right ) >= 1 )
-				newroot = alpha_rotate_rightleft( node );
-			else 
-				newroot = alpha_rotate_rightright( node );
-		} 
+	if(node->right!=NULL){
+		alpha_update_nodes_size(node->right);
+		size += node->right->size;
+	}   
+    node->size=size; 
+}
+
+void
+alpha_balance(alpha_tree_t* tree){
+   if(tree==NULL)
+      return;
+
+   alpha_balance_node(tree->root);
+   alpha_update_nodes_size(tree->root);
+}
+
+void 
+alpha_node_add(alpha_node_t *node, dijkstra_vertice* v){
+	 if(node==NULL)
+	    return;
+     node->pivot+= v->dist/2;
+	 node->vertices = g_slist_append(node->vertices, v); 
+	 node->count++; 
+
+	 printf("add %d no %p - the size is %d \n",v->value,node, node->size );
+}
+
+
+dijkstra_vertice* 
+get_min_node_alpha(alpha_tree_t* tree){
+   alpha_node_t* target =  tree->root;
+    
+   GSList * l = g_slist_last(target->vertices);
+   dijkstra_vertice* v = (dijkstra_vertice*)l->data;
+
+   if(v!=NULL){
+       target->vertices = g_slist_remove(target->vertices,v);  
+	    target->count--;
+		//update pivot       
+   }
+
+   alpha_balance(tree);
+   
+   return v;
+}
+
+void
+alpha_insert(alpha_tree_t* tree, dijkstra_vertice* v){
+    
+	alpha_node_t* target=NULL;  
+	alpha_node_t* last=NULL; 
+
+	if(tree->root == NULL){
+        tree->root = alpha_create_node();
+		target = tree->root;  	
+	}
+	else{
+       target = tree->root;
+
+	   while(target!=NULL){
+          
+          if( v->dist < target->pivot ){
+           //   printf("- PIVOT: %d ADD %ld \n",target->pivot,v->dist); 
+		      if(target->count < target->size){
+                  break;
+			  }
+			  else{
+				 last = target;  
+                 target = target->left;
+				 if(target==NULL){
+					target = alpha_create_node();
+					last->left = target;
+					break;
+				 }
+			  }
+		  }
+		  else{
+			 //  printf("o size eh: %d \n", target->size);
+			  if(target->count < target->size){
+                  break;
+			  }
+			  else{
+				 last = target; 
+                 target = target->right;
+				 if(target==NULL){
+					target = alpha_create_node();
+					last->right = target;
+					break;
+				 }
+			  }
+             // printf("+ PIVOT: %d ADD %ld \n",target->pivot,v->dist);
+		  } 
+		 // break;
+	   }        
 	}
 
-	newroot = node;
-	
-
-	return( newroot );	
+    alpha_node_add(target,v);	
+    alpha_update_nodes_size(tree->root);
+	alpha_balance(tree);
 }
 
-/* Balance a given tree */
-void alpha_balance( alpha_tree_t *tree ) {
 
-	alpha_node_t *newroot = NULL;
 
-	newroot = alpha_balance_node( tree->root );
-
-	if( newroot != tree->root )  {
-		tree->root = newroot; 
-	}
-}
-
-/* Insert a new node. */
-void alpha_insert( alpha_tree_t *tree, int value, dijkstra_vertice* v) {
-	alpha_node_t *node = NULL;
-	alpha_node_t *next = NULL;
-	alpha_node_t *last = NULL;
-
-	/* Well, there must be a first case */ 	
-	if( tree->root == NULL ) {
-		node = alpha_create_node();
-		node->value = value;
-        node->v = v;
-		tree->root = node;
-
-	/* Okay.  We have a root already.  Where do we put this? */
-	} else {
-		next = tree->root;
-
-		while( next != NULL ) {
-			last = next;
-
-			if( value < next->value ) {
-				next = next->left;
-
-			} else if( value > next->value ) {
-				next = next->right;
-
-			/* Have we already inserted this node? */
-			} else if( value == next->value ) {
-				/* This shouldn't happen. */	
-			}
-		}
-
-		node = alpha_create_node();
-		node->value = value;
-        node->v = v;
-
-		if( value < last->value ) last->left = node;
-		if( value > last->value ) last->right = node;
-		
-	}
-
-	alpha_balance( tree );
-}
-
-/* Find the node containing a given value */
-alpha_node_t *alpha_find( alpha_tree_t *tree, int value ) {
-	alpha_node_t *current = tree->root;
-
-	while( current && current->value != value ) {
-		if( value > current->value )
-			current = current->right;
-		else
-			current = current->left;
-	}
-
-	return current;
-}
-
-/* Do a depth first traverse of a node. */
-void alpha_traverse_node_dfs( alpha_node_t *node, int depth ) {
-	int i = 0;
-
-	if( node->left ) alpha_traverse_node_dfs( node->left, depth + 2 );
-
-	for( i = 0; i < depth; i++ ) putchar( ' ' );
-	printf( "%d: %d\n", node->value, alpha_balance_factor( node ) );
-
-	if( node->right ) alpha_traverse_node_dfs( node->right, depth + 2 );
-}
-
-/* Do a depth first traverse of a tree. */
-void alpha_traverse_dfs( alpha_tree_t *tree ) {
-	alpha_traverse_node_dfs( tree->root, 0 );
-}
