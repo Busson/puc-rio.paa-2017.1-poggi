@@ -6,8 +6,8 @@
 #include "stp/stp_reader.h" 
 #include "cpu_timer/CPUTimer.h"
  
+static CPUTimer totaltime; 
 guint32 count_n_operations;
-guint32 count_n2_operations;
 guint32 count_m_operations;
 
 struct dijkstra_vertice_s{ 
@@ -135,8 +135,8 @@ int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
   //  stp_get_content(doc, "input/sample.stp");
-    stp_get_content(doc, "input/ALUE/alue2087.stp");
-   
+   stp_get_content(doc, "input/ALUE/alue2087.stp");
+    
     dijkstra_vertice **dv = (dijkstra_vertice **)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
@@ -153,12 +153,15 @@ int main(int argc, char *argv[]){
     //init time count
     double t = seconds();
     guint32 k =0;
-    
 
-    while( seconds() - t < 5.0 ){
+    totaltime.reset();
+
+    while( totaltime.getCPUTotalSecs() < 5.0 ){
       count_n_operations=0;
       count_m_operations=0;  
+      totaltime.start();
       dijkstra(dv, 1, doc->nodes+1);
+      totaltime.stop();
        k++;
       for(guint32 i=0; i< doc->nodes+1; i++){
         reset_node(dv[i]);
@@ -166,7 +169,7 @@ int main(int argc, char *argv[]){
     }
     printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
     printf("\n n: %d m: %d",count_n_operations,count_m_operations);
-    printf("\nDijkstra : %f  k=%d total: %lf\n", (seconds() - t)/k, k, (seconds() - t) );
+    printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
    
 
     return 0;
