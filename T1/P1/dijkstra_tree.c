@@ -85,11 +85,11 @@ dijkstra( avl_tree_t *tree, gint64 src, gint64 nV){
     node->v->dist = 0;
       
     for (gint64 count = 0; count < nV-1; count++){
-        node =  get_min_distance_avl(tree,nV);
+        node =  get_min_distance_avl(tree,nV); /* 1.1 */
         if(node==NULL)continue;
         node->v->sptSet=1;
     
-        for(guint32 i=0;i<node->v->sdjCount;i++){
+        for(guint32 i=0;i<node->v->sdjCount;i++){ /* 1.3 */
             if(!node->v->adjs[i]->sptSet && node->v->dist + node->v->weights[i] < node->v->adjs[i]->dist ){
             node->v->adjs[i]->dist = node->v->dist + node->v->weights[i]; 
             parent[node->v->adjs[i]->value] = node->value;

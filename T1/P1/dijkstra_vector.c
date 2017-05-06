@@ -4,7 +4,12 @@
 #include <glib.h>
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
+#include "cpu_timer/CPUTimer.h"
  
+guint32 count_n_operations;
+guint32 count_n2_operations;
+guint32 count_m_operations;
+
 struct dijkstra_vertice_s{ 
   gint64 value;
   gint64 dist;  
@@ -18,18 +23,32 @@ typedef struct dijkstra_vertice_s dijkstra_vertice;
 
 dijkstra_vertice *
 create_node_vertice(gint64 value,guint32 nV){
-   dijkstra_vertice* v = malloc(sizeof(dijkstra_vertice));
+   dijkstra_vertice* v = (dijkstra_vertice*)malloc(sizeof(dijkstra_vertice));
    v->value = value;
    v->dist= INT_MAX;
    v->sptSet =0;
    v->sdjCount=0;
-   v->adjs = malloc(sizeof(dijkstra_vertice *)*nV);
-   v->weights = malloc(sizeof(gint64)*nV);
+   v->adjs = (dijkstra_vertice **)malloc(sizeof(dijkstra_vertice *)*nV);
+   v->weights = (gint64*)malloc(sizeof(gint64)*nV);
    for(guint32 i=0; i< nV; i++){
      v->adjs[i]=NULL;
      v->weights[i]=0;
    }
    return v;
+}
+
+double 
+seconds(){
+  double secs;
+   
+  secs = (double)(clock() / 1000.0);
+  return(secs);
+}
+
+void 
+reset_node(dijkstra_vertice * v){
+   v->dist= INT_MAX;
+   v->sptSet =0;
 }
 
 void
@@ -47,9 +66,11 @@ insert_adj_in_node(dijkstra_vertice *v,dijkstra_vertice *w, gint64 p, guint32 nV
 dijkstra_vertice*
 get_min_distance(dijkstra_vertice **dv, gint64 nV){
     int min = INT_MAX, min_index;
-    for (int v = 0; v < nV; v++)
+    for (int v = 0; v < nV; v++){
+        count_n_operations++;
         if (dv[v]->sptSet == 0 && dv[v]->dist <= min)
             min = dv[v]->dist, min_index = v;
+    }
  
     return dv[min_index];
 }
@@ -86,35 +107,37 @@ initialize_vector(gint64* parent, gint64 nV){
 void 
 dijkstra(dijkstra_vertice **dv, gint64 src, gint64 nV){
 
-    gint64 *parent = malloc((sizeof(gint64))*nV);
+    gint64 *parent = (gint64*)malloc((sizeof(gint64))*nV);
     
     initialize_vector(parent,nV);
 
     dv[src]->dist=0;
 
     for (gint64 count = 0; count < nV-1; count++){
-       dijkstra_vertice* v = get_min_distance(dv,nV);
+       dijkstra_vertice* v = get_min_distance(dv,nV); /* 1.1 */
        if(v==NULL)continue;
        v->sptSet=1;
        
-       for(guint32 i=0;i< v->sdjCount;i++){
+       for(guint32 i=0;i< v->sdjCount;i++){  /* 1.3 */
+           count_m_operations++;
            dijkstra_vertice * w = dv[v->adjs[i]->value];
-           if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
+           if(v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
                 parent[w->value] = v->value;
            } 
        }
     }
 
-    print_solution(dv, nV, parent, src);
+ //   print_solution(dv, nV, parent, src);
 }
 
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
+  //  stp_get_content(doc, "input/sample.stp");
+    stp_get_content(doc, "input/ALUE/alue2087.stp");
    
-    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+    dijkstra_vertice **dv = (dijkstra_vertice **)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
         dv[i] = create_node_vertice(i,doc->nodes+1);
@@ -126,8 +149,25 @@ int main(int argc, char *argv[]){
                           doc->e[i].c,
                           doc->nodes+1);                   
     }
- 
-    dijkstra(dv, 1, doc->nodes+1);
- 
+
+    //init time count
+    double t = seconds();
+    guint32 k =0;
+    
+
+    while( seconds() - t < 5.0 ){
+      count_n_operations=0;
+      count_m_operations=0;  
+      dijkstra(dv, 1, doc->nodes+1);
+       k++;
+      for(guint32 i=0; i< doc->nodes+1; i++){
+        reset_node(dv[i]);
+      }
+    }
+    printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
+    printf("\n n: %d m: %d",count_n_operations,count_m_operations);
+    printf("\nDijkstra : %f  k=%d total: %lf\n", (seconds() - t)/k, k, (seconds() - t) );
+   
+
     return 0;
 }

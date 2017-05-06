@@ -8,7 +8,7 @@
 
 STP_DOCUMENT*
 stp_new(){
-   STP_DOCUMENT* doc = malloc (sizeof (STP_DOCUMENT));
+   STP_DOCUMENT* doc = (STP_DOCUMENT*)malloc (sizeof (STP_DOCUMENT));
    doc->comment.name = NULL;
    doc->comment.creator = NULL;
    doc->comment.remark = NULL;
@@ -28,14 +28,14 @@ processGraphLine(STP_DOCUMENT* doc, gchar * line){
    gchar** str_arr = g_strsplit (line," ",-1);  
    if(g_strcmp0(g_ascii_strdown(str_arr[0], -1), "nodes") == 0){
      doc->nodes = (guint32)g_ascii_strtoll(str_arr[1],NULL,10);
-     doc->dd = malloc (sizeof(STP_COORDINATE)*doc->nodes);
+     doc->dd = (STP_COORDINATE*)malloc (sizeof(STP_COORDINATE)*doc->nodes);
      guint32 i; for(i=0; i< doc->nodes; i++){
        doc->dd[i].node= 0;
      }
    }
    else if(g_strcmp0(g_ascii_strdown(str_arr[0], -1), "edges") == 0){ 
      doc->edges = (guint32)g_ascii_strtoll(str_arr[1],NULL,10);
-     doc->e = malloc (sizeof(STP_EDGE)*doc->edges);
+     doc->e = (STP_EDGE*)malloc (sizeof(STP_EDGE)*doc->edges);
      guint32 i; for(i=0; i< doc->edges; i++){
        doc->e[i].node1= 0;
      }
@@ -57,7 +57,7 @@ processTerminalsLine(STP_DOCUMENT* doc, gchar * line){
    gchar** str_arr = g_strsplit (line," ",-1);  
    if(g_strcmp0(g_ascii_strdown(str_arr[0], -1), "terminals") == 0){ 
      doc->terminals = (guint32)g_ascii_strtoll(str_arr[1],NULL,10); 
-     doc->t = malloc (sizeof(STP_EDGE)*doc->terminals);
+     doc->t = (STP_TERMINAL*)malloc (sizeof(STP_TERMINAL)*doc->terminals);
      guint32 i; for(i=0; i< doc->terminals; i++){
        doc->t[i].node = 0;
      }

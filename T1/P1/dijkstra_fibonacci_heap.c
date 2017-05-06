@@ -82,10 +82,10 @@ dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
     
     while (!is_empty(heap)){
        
-       dijkstra_vertice * v = dv[((dijkstra_vertice *)heap_extract_min(&heap).value)->value] ;
+       dijkstra_vertice * v = dv[((dijkstra_vertice *)heap_extract_min(&heap).value)->value] ; /* 1.1 */
         v->sptSet=1;
 
-       for(guint32 i=0;i< v->sdjCount;i++){
+       for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
            dijkstra_vertice * w = dv[v->adjs[i]->value];
            if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];

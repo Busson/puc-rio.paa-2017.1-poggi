@@ -32,6 +32,7 @@ insert_adj_in_node(dijkstra_vertice *v,dijkstra_vertice *w, gint64 p, guint32 nV
      }
    }
 }
+
 /*
 alpha_node_t*
 get_min_distance_alpha(alpha_tree_t *tree, gint64 nV){
@@ -44,6 +45,7 @@ get_min_distance_alpha(alpha_tree_t *tree, gint64 nV){
      return alpha_find( tree, min_index);
 }
 */
+
 void 
 print_path(gint64*  parent, gint64 j){
     if (parent[j]==-1)

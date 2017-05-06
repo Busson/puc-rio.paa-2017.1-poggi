@@ -85,11 +85,11 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
 
     while(!bucket_is_empty(buc)){
                  
-       dijkstra_vertice* v = bucket_remove_min(buc);
+       dijkstra_vertice* v = bucket_remove_min(buc); /* 1.1 */
        if(v==NULL)continue;
        v->sptSet=1;
        
-       for(guint32 i=0;i< v->sdjCount;i++){
+       for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
            dijkstra_vertice * w = dv[v->adjs[i]->value];
            if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
