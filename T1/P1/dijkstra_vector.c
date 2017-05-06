@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
   //  stp_get_content(doc, "input/sample.stp");
-    stp_get_content(doc, "input/ALUE/alue2087.stp");
+    stp_get_content(doc, "input/ALUE/alue2105.stp");
    
     dijkstra_vertice **dv = (dijkstra_vertice **)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
