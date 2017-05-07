@@ -7,6 +7,7 @@
 #include "cpu_timer/CPUTimer.h"
 
 static CPUTimer totaltime; 
+guint32 count_process_nodes;
 
 
 dijkstra_vertice *
@@ -28,6 +29,9 @@ create_node_vertice(gint64 value,guint32 nV){
 
 void 
 reset_node(dijkstra_vertice * v){
+   if(v->dist!=INT_MAX) {
+       count_process_nodes++;
+   }
    v->dist= INT_MAX;
    v->sptSet =0;
 }
@@ -87,15 +91,15 @@ dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
     gint64 *parent = (gint64*)malloc((sizeof(gint64))*nV);
     initialize_vector(parent,nV);
     dv[src]->dist=0;
+
     heap_insert(&heap,dv[src]->dist,dv[src]);
     
     while (!is_empty(heap)){
-       
        dijkstra_vertice * v = dv[((dijkstra_vertice *)heap_extract_min(&heap).value)->value] ; /* 1.1 */
         v->sptSet=1;
 
        for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
-         //  count_m_operations++;
+           count_m_operations++;
            dijkstra_vertice * w = dv[v->adjs[i]->value];
            if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
@@ -116,8 +120,8 @@ void print_data(data d){
 int main(){
 
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
-  // stp_get_content(doc, "input/ALUE/alue2087.stp");
+  //  stp_get_content(doc, "input/sample.stp");
+   stp_get_content(doc, "input/DMXA/dmxa0296.stp");
 
     heap* myheap = heap_init();
     dijkstra_vertice **dv = (dijkstra_vertice**)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
@@ -137,10 +141,12 @@ int main(){
     totaltime.reset();
 
     while( totaltime.getCPUTotalSecs() < 5.0 ){
-    //  count_n_operations=0;
-    //  count_m_operations=0;  
+      count_n_operations=0;
+      count_m_operations=0;  
+      count_process_nodes=0;
+
       totaltime.start();
-      dijkstra(myheap,dv,9,doc->nodes+1);
+      dijkstra(myheap,dv,1,doc->nodes+1);
       totaltime.stop();
       k++;
       for(guint32 i=0; i< doc->nodes+1; i++){
@@ -149,7 +155,8 @@ int main(){
     }
 
     printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
-  //  printf("\n n: %d m: %d",count_n_operations,count_m_operations);
+    printf("\nProcessed graph size: %d nodes",count_process_nodes);
+    printf("\n n: %d m: %d",count_n_operations,count_m_operations);
     printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
 
     heap_free(&myheap);
