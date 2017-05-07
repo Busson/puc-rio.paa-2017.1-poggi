@@ -4,23 +4,32 @@
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
 #include "fibonacci_heap/heap.h"
+#include "cpu_timer/CPUTimer.h"
+
+static CPUTimer totaltime; 
 
 
 dijkstra_vertice *
 create_node_vertice(gint64 value,guint32 nV){
-   dijkstra_vertice* v = malloc(sizeof(dijkstra_vertice));
+   dijkstra_vertice* v = (dijkstra_vertice*)malloc(sizeof(dijkstra_vertice));
    v->value = value;
    v->dist= INT_MAX;
    v->parent = -1;
    v->sptSet =0;
    v->sdjCount=0;
-   v->adjs = malloc(sizeof(dijkstra_vertice *)*nV);
-   v->weights = malloc(sizeof(gint64)*nV);
+   v->adjs = (dijkstra_vertice**)malloc(sizeof(dijkstra_vertice *)*nV);
+   v->weights = (gint64*)malloc(sizeof(gint64)*nV);
    for(guint32 i=0; i< nV; i++){
      v->adjs[i]=NULL;
      v->weights[i]=0;
    }
    return v;
+}
+
+void 
+reset_node(dijkstra_vertice * v){
+   v->dist= INT_MAX;
+   v->sptSet =0;
 }
 
 void
@@ -75,7 +84,7 @@ initialize_vector(gint64* parent, gint64 nV){
 
 void 
 dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
-    gint64 *parent = malloc((sizeof(gint64))*nV);
+    gint64 *parent = (gint64*)malloc((sizeof(gint64))*nV);
     initialize_vector(parent,nV);
     dv[src]->dist=0;
     heap_insert(&heap,dv[src]->dist,dv[src]);
@@ -86,6 +95,7 @@ dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
         v->sptSet=1;
 
        for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
+         //  count_m_operations++;
            dijkstra_vertice * w = dv[v->adjs[i]->value];
            if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
@@ -95,7 +105,7 @@ dijkstra(heap* heap, dijkstra_vertice ** dv, gint64 src, gint64 nV){
        }
     }
 
-    print_solution(dv, nV, parent, src);
+  //  print_solution(dv, nV, parent, src);
 }
 
 void print_data(data d){
@@ -110,7 +120,7 @@ int main(){
   // stp_get_content(doc, "input/ALUE/alue2087.stp");
 
     heap* myheap = heap_init();
-    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+    dijkstra_vertice **dv = (dijkstra_vertice**)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
         dv[i] = create_node_vertice(i,doc->nodes+1);
@@ -122,8 +132,25 @@ int main(){
                           doc->e[i].c,
                           doc->nodes+1);
     }
- 
-    dijkstra(myheap,dv,9,doc->nodes+1);
+    
+    guint32 k =0;
+    totaltime.reset();
+
+    while( totaltime.getCPUTotalSecs() < 5.0 ){
+    //  count_n_operations=0;
+    //  count_m_operations=0;  
+      totaltime.start();
+      dijkstra(myheap,dv,9,doc->nodes+1);
+      totaltime.stop();
+      k++;
+      for(guint32 i=0; i< doc->nodes+1; i++){
+        reset_node(dv[i]);
+      }
+    }
+
+    printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
+  //  printf("\n n: %d m: %d",count_n_operations,count_m_operations);
+    printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
 
     heap_free(&myheap);
     return 0;

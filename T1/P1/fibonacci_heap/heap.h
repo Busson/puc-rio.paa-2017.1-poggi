@@ -6,6 +6,7 @@
 #include <string.h>
 #include <glib.h>
 
+
 struct dijkstra_vertice_s{ 
   gint64 value;
   gint64 dist;  

@@ -7,6 +7,8 @@
 #include "heap.h"
 #include "node.h"
 
+
+
 heap* heap_init(){
     return NULL;
 }
@@ -64,9 +66,11 @@ data  heap_extract_min(heap** H){
     node_free(z);
     if (first){
         node* current = first->right;
+       //  count_n_operations++;
         while (current != first){
             current->parent = NULL;
             current = current->right;
+        //    count_n_operations++;
         }
         first->parent = NULL;
         *H = heap_union(*H, first);
@@ -91,7 +95,7 @@ void  heap_remove_from(heap** H, node* x){
 void  heap_consolidate(heap** H){
     node* x = *H;
     if (!x) return;
-    node** A = calloc(100, sizeof(node));
+    node** A = (node**)calloc(100, sizeof(node));
     memset(A, '\0', 100);
     assert(x->degree >= 0);
     node* last = x->left;
