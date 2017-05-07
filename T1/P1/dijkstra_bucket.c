@@ -4,17 +4,21 @@
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
 #include "bucket/bucket.h"
+#include "cpu_timer/CPUTimer.h"
+
+static CPUTimer totaltime; 
+guint32 count_process_nodes;
 
 dijkstra_vertice *
 create_node_vertice(gint64 value,guint32 nV){
-   dijkstra_vertice* v = malloc(sizeof(dijkstra_vertice));
+   dijkstra_vertice* v = (dijkstra_vertice*)malloc(sizeof(dijkstra_vertice));
    v->value = value;
    v->dist= INT_MAX;
    v->parent = -1;
    v->sptSet =0;
    v->sdjCount=0;
-   v->adjs = malloc(sizeof(dijkstra_vertice *)*nV);
-   v->weights = malloc(sizeof(gint64)*nV);
+   v->adjs = (dijkstra_vertice **)malloc(sizeof(dijkstra_vertice *)*nV);
+   v->weights = (gint64*)malloc(sizeof(gint64)*nV);
    for(guint32 i=0; i< nV; i++){
      v->adjs[i]=NULL;
      v->weights[i]=0;
@@ -32,6 +36,15 @@ insert_adj_in_node(dijkstra_vertice *v,dijkstra_vertice *w, gint64 p, guint32 nV
          break;
      }
    }
+}
+
+void 
+reset_node(dijkstra_vertice * v){
+   if(v->dist!=INT_MAX) {
+       count_process_nodes++;
+   }
+   v->dist= INT_MAX;
+   v->sptSet =0;
 }
 
 gint64 
@@ -76,7 +89,7 @@ initialize_vector(gint64* parent,gint32 nV){
 void 
 dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
 
-    gint64 *parent = malloc((sizeof(gint64))*nV);
+    gint64 *parent = (gint64*)malloc((sizeof(gint64))*nV);
     
     initialize_vector(parent,nV);
 
@@ -90,6 +103,7 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
        v->sptSet=1;
        
        for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
+           count_m_operations++;
            dijkstra_vertice * w = dv[v->adjs[i]->value];
            if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
                 w->dist = v->dist + v->weights[i];
@@ -99,17 +113,17 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
        }
     }
 
-    print_solution(dv, nV, parent, src);
+ //   print_solution(dv, nV, parent, src);
 }
 
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
-    //  stp_get_content(doc, "input/ALUE/alue2087.stp");
+  //  stp_get_content(doc, "input/sample.stp");
+      stp_get_content(doc, "input/ALUE/alue2087.stp");
 
     guint32 totalC=0;
-    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+    dijkstra_vertice **dv = (dijkstra_vertice**)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
         dv[i] = create_node_vertice(i,doc->nodes+1);
@@ -124,8 +138,29 @@ int main(int argc, char *argv[]){
     } 
     
     bucket * buc = create_bucket(totalC);
- 
-    dijkstra(buc, dv, 1, doc->nodes+1);
+    guint32 k =0;
+    totaltime.reset();
+
+    while( totaltime.getCPUTotalSecs() < 5.0 ){
+      count_n_operations=0;
+      count_m_operations=0;  
+      count_process_nodes=0;
+
+      totaltime.start(); 
+      dijkstra(buc, dv, 1, doc->nodes+1);
+      totaltime.stop();
+      k++;
+      for(guint32 i=0; i< doc->nodes+1; i++){
+        reset_node(dv[i]);
+      }
+    }
+
+    printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
+    printf("\nProcessed graph size: %d nodes",count_process_nodes);
+    printf("\nBucket size: %d", totalC);
+    printf("\n n: %d m: %d",count_n_operations,count_m_operations);
+    printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
+
  
     return 0;
 }

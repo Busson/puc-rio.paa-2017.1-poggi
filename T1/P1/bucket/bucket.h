@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <glib.h>
 
+extern guint32 count_n_operations;
+extern guint32 count_m_operations;
+
 typedef struct{
    guint32 value; 
    GSList * list;

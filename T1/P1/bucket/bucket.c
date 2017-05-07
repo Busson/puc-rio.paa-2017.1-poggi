@@ -2,12 +2,16 @@
 #include "bucket.h"
 #include <stdio.h>
 
+guint32 count_n_operations;
+guint32 count_m_operations;
+
+
 bucket*
 create_bucket(guint32 maxPath){
-    bucket* buc = malloc(sizeof(bucket));
+    bucket* buc = (bucket*)malloc(sizeof(bucket));
     buc->size = maxPath;
     buc->count = 0;
-    buc->buckets = malloc( sizeof(bucket_node)*maxPath );
+    buc->buckets = (bucket_node*)malloc( sizeof(bucket_node)*maxPath );
     for(guint32 i=0; i< maxPath; i++){
         buc->buckets[i].list = NULL;
         buc->buckets[i].value = i;
@@ -35,7 +39,7 @@ dijkstra_vertice*
 bucket_remove_min(bucket* buc){
  
    for(guint32 i=0; i< buc->size; i++ ){
-       
+        count_n_operations++;
         if(buc->buckets[i].list != NULL){
              
             GSList * l =  g_slist_last(buc->buckets[i].list);
