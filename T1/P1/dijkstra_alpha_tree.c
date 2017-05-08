@@ -4,16 +4,20 @@
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
 #include "alpha_tree/alpha.h"
+#include "cpu_timer/CPUTimer.h"
+
+static CPUTimer totaltime; 
+guint32 count_process_nodes;
 
 dijkstra_vertice *
 create_node_vertice(gint64 value, guint32 nV){
-   dijkstra_vertice* v = malloc(sizeof(dijkstra_vertice));
+   dijkstra_vertice* v = (dijkstra_vertice*)malloc(sizeof(dijkstra_vertice));
    v->value = value;
    v->dist= INT_MAX;
    v->sptSet =0;
    v->sdjCount=0;
-   v->adjs = malloc(sizeof(dijkstra_vertice *)*nV);
-   v->weights = malloc(sizeof(gint64)*nV);
+   v->adjs = (dijkstra_vertice **)malloc(sizeof(dijkstra_vertice *)*nV);
+   v->weights = (gint64*)malloc(sizeof(gint64)*nV);
    for(guint32 i=0; i< nV; i++){
      v->adjs[i]=NULL;
      v->weights[i]=0;
@@ -33,18 +37,14 @@ insert_adj_in_node(dijkstra_vertice *v,dijkstra_vertice *w, gint64 p, guint32 nV
    }
 }
 
-/*
-alpha_node_t*
-get_min_distance_alpha(alpha_tree_t *tree, gint64 nV){
-    int min = INT_MAX, min_index;
-     for (int v = 0; v < nV; v++){
-         alpha_node_t* node =  alpha_find( tree, v ); 
-         if(node->v->sptSet == 0 && node->v->dist < min )
-            min = node->v->dist, min_index = v;
-     }
-     return alpha_find( tree, min_index);
+void 
+reset_node(dijkstra_vertice * v){
+   if(v->dist!=INT_MAX) {
+       count_process_nodes++;
+   }
+   v->dist= INT_MAX;
+   v->sptSet =0;
 }
-*/
 
 void 
 print_path(gint64*  parent, gint64 j){
@@ -77,7 +77,7 @@ initialize_parent(gint64* parent, gint64 nV){
 void 
 dijkstra(alpha_tree_t *tree, dijkstra_vertice **dv, gint64 src, gint64 nV){
      
-     gint64 *parent = malloc((sizeof(gint64))*nV);
+     gint64 *parent = (gint64*)malloc((sizeof(gint64))*nV);
      initialize_parent(parent, nV);
 
      dv[src]->dist=0;
@@ -101,7 +101,7 @@ dijkstra(alpha_tree_t *tree, dijkstra_vertice **dv, gint64 src, gint64 nV){
            } 
         } 
      }
-     print_solution(dv, nV, parent, src);
+  //   print_solution(dv, nV, parent, src);
 } 
 
 
@@ -110,12 +110,12 @@ int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
  //   stp_get_content(doc, "input/sample.stp");
-   stp_get_content(doc, "input/ALUE/alue2087.stp");
+     stp_get_content(doc, "input/ALUE/alue2087.stp");
     
     alpha_tree_t *tree = NULL;
     tree = alpha_create();
 
-    dijkstra_vertice **dv = malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
+    dijkstra_vertice **dv = (dijkstra_vertice **)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
     for(guint32 i=0; i< doc->nodes+1; i++){
         dv[i] = create_node_vertice(i,doc->nodes+1);
@@ -127,13 +127,38 @@ int main(int argc, char *argv[]){
                           doc->e[i].c,
                           doc->nodes+1);                                     
     } 
-
-    dijkstra(tree,dv, 1, doc->nodes+1);
     
-    printf("\n\nTotal nodes: %d", doc->nodes);
+    create_histogram();
+
+    guint32 k =0;
+    totaltime.reset();
+
+    while( totaltime.getCPUTotalSecs() < 5.0 ){
+      count_n_operations=0;
+      count_m_operations=0;  
+      count_process_nodes=0;
+      max_height=0;
+      balance_count=0;
+      clear_histogram();
+
+      totaltime.start();
+      dijkstra(tree,dv, 1, doc->nodes+1);
+      totaltime.stop();
+      k++;
+      for(guint32 i=0; i< doc->nodes+1; i++){
+        reset_node(dv[i]);
+      }
+      tree = alpha_create();
+    }
+
+    printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
+    printf("\nProcessed graph size: %d nodes",count_process_nodes);
     printf("\nAlpha factor: %f",ALPHA_FACTOR );
     printf("\nTotal balances: %d", balance_count);
-    printf("\nMax height: %d \n", max_height);
- 
+    printf("\nMax height: %d ", max_height);
+    printf("\n n: %d m: %d",count_n_operations,count_m_operations);
+    printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
+    
+    print_histogram();
     return 0;
 }

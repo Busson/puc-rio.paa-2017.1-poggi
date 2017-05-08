@@ -6,8 +6,13 @@
 
 #define ALPHA_FACTOR 1.0
 
-guint32 max_height;
-guint32 balance_count;
+extern guint32 max_height;
+extern guint32 cur_height;
+extern guint32 balance_count;
+extern guint32 count_n_operations;
+extern guint32 count_m_operations;
+
+extern guint32* histogram;
 
 struct dijkstra_vertice_s{ 
   guint32 value;
@@ -49,5 +54,13 @@ alpha_tree_t* alpha_create();
 void alpha_insert(alpha_tree_t* tree, dijkstra_vertice* v);
 
 dijkstra_vertice * get_min_node_alpha(alpha_tree_t* tree);
+
+void create_histogram();
+
+void clear_histogram();
+
+void insert_histogram(guint32 v);
+
+void print_histogram();
 
 #endif
