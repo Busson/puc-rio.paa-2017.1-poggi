@@ -6,6 +6,9 @@
 #include <string.h>
 #include <glib.h>
 
+extern guint32 count_n_operations;
+extern guint32 count_m_operations;
+
 struct dijkstra_vertice_s{ 
   gint64 value;
   gint64 dist;  

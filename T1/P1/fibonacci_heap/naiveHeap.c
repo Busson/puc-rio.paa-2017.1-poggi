@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <limits.h>
 
+
+
 const int INITIAL_SIZE = 16;
 const int RESIZE_FACTOR = 2;
 

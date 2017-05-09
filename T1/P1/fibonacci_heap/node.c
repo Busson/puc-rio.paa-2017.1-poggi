@@ -1,7 +1,7 @@
 #include "node.h"
 
 node* node_init(int key, void* value){
-    node* newNode = malloc(sizeof(node));
+    node* newNode = (node*)malloc(sizeof(node));
     newNode->left = newNode->right = newNode;
     newNode->key = key;
     newNode->value = value;

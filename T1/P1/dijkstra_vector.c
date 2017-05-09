@@ -37,14 +37,6 @@ create_node_vertice(gint64 value,guint32 nV){
    return v;
 }
 
-double 
-seconds(){
-  double secs;
-   
-  secs = (double)(clock() / 1000.0);
-  return(secs);
-}
-
 void 
 reset_node(dijkstra_vertice * v){
    v->dist= INT_MAX;
@@ -134,8 +126,8 @@ dijkstra(dijkstra_vertice **dv, gint64 src, gint64 nV){
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-  //  stp_get_content(doc, "input/sample.stp");
-   stp_get_content(doc, "input/ALUE/alue7065.stp");
+ //   stp_get_content(doc, "input/sample.stp");
+   stp_get_content(doc, "input/ALUE/alue2087.stp");
     
     dijkstra_vertice **dv = (dijkstra_vertice **)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
 
@@ -150,10 +142,8 @@ int main(int argc, char *argv[]){
                           doc->nodes+1);                   
     }
 
-    //init time count
-    double t = seconds();
+  
     guint32 k =0;
-
     totaltime.reset();
 
     while( totaltime.getCPUTotalSecs() < 5.0 ){
@@ -167,6 +157,7 @@ int main(int argc, char *argv[]){
         reset_node(dv[i]);
       }
     }
+
     printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
     printf("\n n: %d m: %d",count_n_operations,count_m_operations);
     printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );

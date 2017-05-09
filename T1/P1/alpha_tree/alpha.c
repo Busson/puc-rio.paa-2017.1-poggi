@@ -4,12 +4,48 @@
 #include "alpha.h"
 
 guint32 max_height;
+guint32 cur_height;
 guint32 balance_count;
+guint32 count_n_operations;
+guint32 count_m_operations;
+
+guint32* histogram;
+
+void 
+create_histogram(){
+   histogram = (guint32*)malloc(sizeof(guint32)*50);
+      for(guint32 i=0; i< 50;i++)
+          histogram[i]=0;
+}
+
+void 
+clear_histogram(){
+   for(guint32 i=0; i< 50;i++){
+      histogram[i]=0;
+   }
+}
+void 
+insert_histogram(guint32 v){
+   histogram[v]++;
+}
+
+void 
+print_histogram(){
+
+   for(guint32 i=0; i< 40;i=i+5){
+   printf("%d - %d | %d - %d | %d - %d | %d - %d | %d - %d \n",
+   i,histogram[i],
+   i+1,histogram[i+1],
+   i+2,histogram[i+2],
+   i+3,histogram[i+3],
+   i+4,histogram[i+4]);
+   }
+}
 
 
 alpha_tree_t* 
 alpha_create(){
-    alpha_tree_t *tree = malloc(sizeof(alpha_tree_t));
+    alpha_tree_t *tree = (alpha_tree_t*)malloc(sizeof(alpha_tree_t));
 	tree->root = NULL;
 	tree->is_empty=FALSE; 
 	return tree;	
@@ -17,7 +53,7 @@ alpha_create(){
 
 alpha_node_t*
 alpha_create_node() {
-	alpha_node_t *node = malloc(sizeof(alpha_node_t));
+	alpha_node_t *node = (alpha_node_t*)malloc(sizeof(alpha_node_t));
 	
 	node->size = 1;
 	node->count =0;
@@ -55,7 +91,7 @@ alpha_balance_node(alpha_node_t *node){
 		  balance_count++; /* debug */
 	//	  printf("balance\n");
 		  alpha_balance_node(node->left); 
-		  node_it* it = malloc(sizeof(node_it));
+		  node_it* it = (node_it*)malloc(sizeof(node_it));
    		  it->min=INT_MAX;
   		  it->min_index=-1;
  		  it->v= NULL;
@@ -79,7 +115,7 @@ alpha_balance_node(alpha_node_t *node){
 		  balance_count++; /* debug */
 	//	  printf("balance\n");
           alpha_balance_node(node->right); 
-		  node_it* it = malloc(sizeof(node_it));
+		  node_it* it = (node_it*)malloc(sizeof(node_it));
    		  it->min=INT_MAX;
   		  it->min_index=-1;
  		  it->v= NULL;
@@ -116,8 +152,8 @@ alpha_update_nodes_size(alpha_node_t* node, guint32 height){
 	}   
     node->size=size; 
 	
-	if(height > max_height)
-	   max_height = height; 
+	if(height > cur_height)
+	   cur_height = height; 
 }
 
 void
@@ -154,7 +190,7 @@ get_min_node_alpha(alpha_tree_t* tree){
    alpha_node_t* target =  tree->root;
     
  //  printf("node content: ");
-   node_it* it = malloc(sizeof(node_it));
+   node_it* it = (node_it*)malloc(sizeof(node_it));
    it->min=INT_MAX;
    it->min_index=-1;
    it->v= NULL;
@@ -219,8 +255,11 @@ alpha_insert(alpha_tree_t* tree, dijkstra_vertice* v){
 	}
    
     alpha_node_add(target,v);	
+	cur_height=0;
     alpha_update_nodes_size(tree->root,1);
 	alpha_balance(tree);
+	insert_histogram(cur_height);
+	//printf("CUR H: %d \n",cur_height);
 }
 
 

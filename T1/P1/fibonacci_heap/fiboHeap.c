@@ -7,6 +7,9 @@
 #include "heap.h"
 #include "node.h"
 
+guint32 count_n_operations;
+guint32 count_m_operations;
+
 heap* heap_init(){
     return NULL;
 }
@@ -62,6 +65,7 @@ data  heap_extract_min(heap** H){
     node* first = z->kid;
     heap_remove_from(H, z);
     node_free(z);
+  //  count_n_operations++;
     if (first){
         node* current = first->right;
         while (current != first){
@@ -91,7 +95,7 @@ void  heap_remove_from(heap** H, node* x){
 void  heap_consolidate(heap** H){
     node* x = *H;
     if (!x) return;
-    node** A = calloc(100, sizeof(node));
+    node** A = (node**)calloc(100, sizeof(node));
     memset(A, '\0', 100);
     assert(x->degree >= 0);
     node* last = x->left;
@@ -99,6 +103,7 @@ void  heap_consolidate(heap** H){
         node* next = x->right;
         heap_match_degrees(H, A, x);
         x = next;
+        count_n_operations++;
     }
     heap_match_degrees(H, A, last);
     *H = heap_init();

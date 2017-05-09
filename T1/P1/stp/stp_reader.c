@@ -28,10 +28,10 @@ processGraphLine(STP_DOCUMENT* doc, gchar * line){
    gchar** str_arr = g_strsplit (line," ",-1);  
    if(g_strcmp0(g_ascii_strdown(str_arr[0], -1), "nodes") == 0){
      doc->nodes = (guint32)g_ascii_strtoll(str_arr[1],NULL,10);
-     doc->dd = (STP_COORDINATE*)malloc (sizeof(STP_COORDINATE)*doc->nodes);
+   /*  doc->dd = (STP_COORDINATE*)malloc (sizeof(STP_COORDINATE)*doc->nodes);
      guint32 i; for(i=0; i< doc->nodes; i++){
        doc->dd[i].node= 0;
-     }
+     } */
    }
    else if(g_strcmp0(g_ascii_strdown(str_arr[0], -1), "edges") == 0){ 
      doc->edges = (guint32)g_ascii_strtoll(str_arr[1],NULL,10);
@@ -115,10 +115,10 @@ stp_get_content(STP_DOCUMENT* doc, const gchar* path){
          processCommentLine(doc, line);
       else if(session == GRAPH)
          processGraphLine(doc, line);
-      else if(session == TERMINALS)
+   /*  else if(session == TERMINALS)
          processTerminalsLine(doc, line);   
       else if(session == COORDINATES)
-         processCoordinatesLine(doc, line);      
+         processCoordinatesLine(doc, line);  */ 
 
       line = g_data_input_stream_read_line(data, length, NULL, &error);
    } 
