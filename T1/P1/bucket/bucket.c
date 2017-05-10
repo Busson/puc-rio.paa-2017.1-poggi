@@ -11,6 +11,7 @@ create_bucket(guint32 maxPath){
     bucket* buc = (bucket*)malloc(sizeof(bucket));
     buc->size = maxPath;
     buc->count = 0;
+    buc->lastPos =0;
     buc->buckets = (bucket_node*)malloc( sizeof(bucket_node)*maxPath );
     for(guint32 i=0; i< maxPath; i++){
         buc->buckets[i].list = NULL;
@@ -25,6 +26,7 @@ bucket_add(bucket* buc, dijkstra_vertice* v){
     if(buc->buckets[v->dist].list == NULL){
         buc->buckets[v->dist].list = g_slist_alloc ();
     }
+ //   printf("adicionei o %d na pos %d \n", v->value, v->dist);
     buc->buckets[v->dist].list = g_slist_append(buc->buckets[v->dist].list, v); 
     buc->count++;
 }
@@ -38,21 +40,22 @@ bucket_is_empty(bucket* buc){
 dijkstra_vertice* 
 bucket_remove_min(bucket* buc){
  
-   for(guint32 i=0; i< buc->size; i++ ){
+   for(guint32 i = buc->lastPos; i< buc->size; i++ ){
         count_n_operations++;
         if(buc->buckets[i].list != NULL){
              
             GSList * l =  g_slist_last(buc->buckets[i].list);
             dijkstra_vertice* v = (dijkstra_vertice*)l->data;
-            if(v!=NULL){
+            if(v!=NULL){ 
                buc->buckets[i].list = g_slist_remove(buc->buckets[i].list,v);
                buc->count--;
+              // printf("removi o %d da pos %d \n", v->value, i);
+               buc->lastPos = i;
             }
             else {
                g_slist_free(buc->buckets[i].list);
                buc->buckets[i].list=NULL;
             }
-
             return v;
      }
    }

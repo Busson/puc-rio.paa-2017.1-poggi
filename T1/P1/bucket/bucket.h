@@ -15,6 +15,7 @@ typedef struct{
 typedef struct{
    guint32 size;
    guint32 count;
+   guint32 lastPos;
    bucket_node* buckets;
 }bucket; 
 

@@ -101,7 +101,7 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
        dijkstra_vertice* v = bucket_remove_min(buc); /* 1.1 */
        if(v==NULL)continue;
        v->sptSet=1;
-       
+     
        for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
            count_m_operations++;
            dijkstra_vertice * w = dv[v->adjs[i]->value];
@@ -119,8 +119,8 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-  //  stp_get_content(doc, "input/sample.stp");
-    stp_get_content(doc, "input/ALUT/alut2288.stp");
+    stp_get_content(doc, "input/sample.stp");
+  //  stp_get_content(doc, "input/ALUT/alut2288.stp");
 
     guint32 maxC=0;
     dijkstra_vertice **dv = (dijkstra_vertice**)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
@@ -143,10 +143,11 @@ int main(int argc, char *argv[]){
     guint32 k =0;
     totaltime.reset();
 
-    while( totaltime.getCPUTotalSecs() < 5.0 ){
+    while( totaltime.getCPUTotalSecs() < 0.1 ){
       count_n_operations=0;
       count_m_operations=0;  
       count_process_nodes=0;
+     
    // printf("\n n: %d m: %d",count_n_operations,count_m_operations);
       totaltime.start(); 
       dijkstra(buc, dv, 1, doc->nodes+1);
@@ -155,12 +156,14 @@ int main(int argc, char *argv[]){
       k++;
       for(guint32 i=0; i< doc->nodes+1; i++){
         reset_node(dv[i]);
+        buc->count=0;
+        buc->lastPos=0;
       }
-    }
+    } 
 
     printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
     printf("\nProcessed graph size: %d nodes",count_process_nodes);
-    printf("\nMax edge w: %d  Bucket size: %d", maxC,maxC*doc->nodes);
+    printf("\nC: %d  nC: %d", maxC,maxC*doc->nodes);
     printf("\n n: %d m: %d",count_n_operations,count_m_operations);
     printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
 
