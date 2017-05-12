@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
     guint32 k =0;
     totaltime.reset();
 
-    while( totaltime.getCPUTotalSecs() < 0.1 ){
+    while( totaltime.getCPUTotalSecs() < 5 ){
       count_n_operations=0;
       count_m_operations=0;  
       count_process_nodes=0;
