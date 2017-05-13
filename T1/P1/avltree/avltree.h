@@ -40,6 +40,7 @@ extern "C" {
 
 extern guint32 count_n_operations;
 extern guint32 count_m_operations;
+extern guint32 tree_count;
 
 struct dijkstra_vertice_s{ 
   gint64 value;

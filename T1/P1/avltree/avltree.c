@@ -40,6 +40,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 guint32 count_n_operations;
 guint32 count_m_operations;
+guint32 tree_count;
 
 #define max(a,b)    (((a) > (b)) ? (a) : (b))
 

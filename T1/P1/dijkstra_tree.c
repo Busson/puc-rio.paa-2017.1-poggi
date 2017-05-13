@@ -1,37 +1,34 @@
 
+#include <glib.h>
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
 #include "stp/stp_reader.h" 
-#include "avltree/avltree.h"
 #include "cpu_timer/CPUTimer.h"
 
 static CPUTimer totaltime; 
 guint32 count_process_nodes;
+guint32 count_n_operations;
+guint32 count_m_operations;
 
-struct kv_node{
-    struct avl_node avl;
-    int key;
-    dijkstra_vertice * value;
+struct dijkstra_vertice_s{ 
+  gint64 value;
+  gint64 dist;  
+  gint64 sptSet;   
+  guint32 sdjCount;
+  struct dijkstra_vertice_s ** adjs;
+  gint64* weights;
 };
 
-int cmp_func(struct avl_node *a, struct avl_node *b, void *aux)
-{
-    struct kv_node *aa, *bb;
-    aa = _get_entry(a, struct kv_node, avl);
-    bb = _get_entry(b, struct kv_node, avl);
+typedef struct dijkstra_vertice_s dijkstra_vertice;
 
-    if (aa->key < bb->key) return -1;
-    else if (aa->key > bb->key) return 1;
-    else return 0;
-}
+dijkstra_vertice *s;
 
 dijkstra_vertice *
 create_node_vertice(gint64 value,guint32 nV){
    dijkstra_vertice* v = (dijkstra_vertice*)malloc(sizeof(dijkstra_vertice));
    v->value = value;
    v->dist= INT_MAX;
-   v->parent = -1;
    v->sptSet =0;
    v->sdjCount=0;
    v->adjs = (dijkstra_vertice **)malloc(sizeof(dijkstra_vertice *)*nV);
@@ -92,39 +89,58 @@ initialize_parent(gint64* parent, gint64 nV){
     }
 } 
 
+gint
+cmp_func(gpointer a, gpointer b){
+   
+    gint64 aa = ((dijkstra_vertice *)a)->dist;
+    gint64 bb = ((dijkstra_vertice *)b)->dist;
+
+   if(aa<bb) return -1;
+   else if(aa==bb) return 0;
+   else return 1;
+}
+
+
+
+gint
+search_func(gpointer a, gpointer b){
+
+    s = (dijkstra_vertice *)a;
+
+    return -1;
+}
+
+
 void 
 dijkstra(dijkstra_vertice **dv, gint64 src, gint64 nV){
     
     gint64 *parent = (gint64*)malloc((sizeof(gint64))*nV);
     initialize_parent(parent, nV);
-    struct kv_node query; query.key = 0;
-     struct avl_node * cur;
-    struct avl_tree tree;
-    avl_init(&tree, NULL);
-    struct kv_node *node = (struct kv_node *)malloc(sizeof(struct kv_node));
-    dv[src]->dist=0;
-    node->key = 0;
-    node->value = dv[src];
-    avl_insert(&tree, &node->avl, cmp_func);
+    
+    GTree * tree = g_tree_new ((GCompareFunc)cmp_func);
 
-    while( (cur = avl_search_greater(&tree, &query.avl, cmp_func)) !=NULL){
-       node = _get_entry(cur, struct kv_node, avl);
-       dijkstra_vertice* v = node->value;
-       avl_remove(&tree,&node->avl);
-       v->sptSet=1; 
-      
-       for(guint32 i=0;i< v->sdjCount;i++){ /* 1.3 */
-   //        count_m_operations++;
-           dijkstra_vertice * w = dv[v->adjs[i]->value];
-           if(!w->sptSet && v->dist + v->weights[i] < w->dist ){
-                w->dist = v->dist + v->weights[i];
-                parent[w->value] = v->value;
-                node = (struct kv_node *)malloc(sizeof(struct kv_node));
-                node->key = w->dist;
-                node->value = dv[w->value];
-                avl_insert(&tree, &node->avl, cmp_func);
+    dv[src]->dist=0;
+    g_tree_insert(tree,dv[src], dv[src]);
+
+    gint64 a = 0;
+
+    while( g_tree_height (tree)>0){
+       
+       g_tree_search(tree,(GCompareFunc)search_func,&a);
+       count_n_operations+=g_tree_height (tree)*2;
+       s->sptSet=1;
+       g_tree_remove(tree,s);  
+
+       for(guint32 i=0;i< s->sdjCount;i++){ /* 1.3 */
+           dijkstra_vertice * w = dv[s->adjs[i]->value];
+           if(!w->sptSet && s->dist + s->weights[i] < w->dist ){
+                w->dist = s->dist + s->weights[i];
+                parent[w->value] = s->value;
+                g_tree_insert(tree,dv[w->value], dv[w->value]);
+                count_m_operations+=g_tree_height (tree);
            } 
        }
+      
     }
 
   //  print_solution(dv, nV, parent, src);
@@ -133,8 +149,8 @@ dijkstra(dijkstra_vertice **dv, gint64 src, gint64 nV){
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
-  // stp_get_content(doc, "input/ALUE/alue2087.stp");
+ //   stp_get_content(doc, "input/sample.stp");
+    stp_get_content(doc, "input/DMXA/dmxa0848.stp");
     
      dijkstra_vertice **dv = (dijkstra_vertice**)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
     
@@ -148,8 +164,11 @@ int main(int argc, char *argv[]){
                           doc->e[i].c,
                           doc->nodes+1);                  
     } 
+
+  
+
     
-    guint32 k =0;
+    guint32 k =1;
     totaltime.reset();
 
     while( totaltime.getCPUTotalSecs() < 5 ){
@@ -166,6 +185,7 @@ int main(int argc, char *argv[]){
         reset_node(dv[i]);
       }
     } 
+
 
     printf("\nGraph: %d nodes %d edges",doc->nodes,doc->edges );
     printf("\nProcessed graph size: %d nodes",count_process_nodes);
