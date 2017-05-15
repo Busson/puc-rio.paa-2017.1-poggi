@@ -119,7 +119,7 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/DMXA/dmxa0454.stp");
+    stp_get_content(doc, "input/sample.stp");
   //  stp_get_content(doc, "input/ALUT/alut2288.stp");
 
     guint32 maxC=0;
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]){
     guint32 k =0;
     totaltime.reset();
 
-    while( totaltime.getCPUTotalSecs() < 0.5 ){
+    while( totaltime.getCPUTotalSecs() < 5 ){
       count_n_operations=0;
       count_m_operations=0;  
       count_process_nodes=0;
