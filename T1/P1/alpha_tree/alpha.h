@@ -4,7 +4,7 @@
 
 #include <glib.h>
 
-#define ALPHA_FACTOR 1.0
+#define ALPHA_FACTOR 0.5
 
 extern guint32 max_height;
 extern guint32 cur_height;

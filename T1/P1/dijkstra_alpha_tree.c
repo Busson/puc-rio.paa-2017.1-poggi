@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
  //   stp_get_content(doc, "input/sample.stp");
-     stp_get_content(doc, "input/ALUE/alue2087.stp");
+     stp_get_content(doc, "input/ALUE/alue5623.stp");
     
     alpha_tree_t *tree = NULL;
     tree = alpha_create();
@@ -159,6 +159,6 @@ int main(int argc, char *argv[]){
     printf("\n n: %d m: %d",count_n_operations,count_m_operations);
     printf("\nDijkstra : %f  k=%d total: %lf\n", totaltime.getCPUTotalSecs()/k, k, totaltime.getCPUTotalSecs() );
     
-    print_histogram();
+ //   print_histogram();
     return 0;
 }
