@@ -121,7 +121,7 @@ int main(){
 
     STP_DOCUMENT *doc = stp_new();  
   //  stp_get_content(doc, "input/sample.stp");
-   stp_get_content(doc, "input/DMXA/dmxa0296.stp");
+   stp_get_content(doc, "input/ALUE/alue7080.stp");
 
     heap* myheap = heap_init();
     dijkstra_vertice **dv = (dijkstra_vertice**)malloc( sizeof(dijkstra_vertice*)*(doc->nodes+1));
