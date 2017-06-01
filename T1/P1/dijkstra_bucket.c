@@ -119,7 +119,7 @@ dijkstra(bucket * buc, dijkstra_vertice **dv, gint64 src, gint32 nV){
 int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
-    stp_get_content(doc, "input/sample.stp");
+    stp_get_content(doc, "input/ALUE/alue5623.stp");
   //  stp_get_content(doc, "input/ALUT/alut2288.stp");
 
     guint32 maxC=0;

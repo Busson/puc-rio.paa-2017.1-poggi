@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
     
     STP_DOCUMENT *doc = stp_new();  
  //   stp_get_content(doc, "input/sample.stp");
-     stp_get_content(doc, "input/ALUE/alue5623.stp");
+     stp_get_content(doc, "input/ALUE/alue7080.stp");
     
     alpha_tree_t *tree = NULL;
     tree = alpha_create();
