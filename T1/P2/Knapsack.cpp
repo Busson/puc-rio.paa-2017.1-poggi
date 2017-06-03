@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <glib.h>
 #include "cpu_timer/CPUTimer.h"
 
 static CPUTimer totalTimer_;
@@ -172,6 +173,136 @@ heapsortRate (struct item *list, int length, bool asc) /// O(nlog n)
     return;
 }
 
+int
+median (int left, int right, struct item *item)
+{
+  struct item aux; 
+
+  for (int i = left; i <= right; i++) 
+  {
+    for (int j = left; j <= right; j++) 
+    {
+      if (item[i].rate > item[j].rate)
+      {
+        aux = item[i];
+        item[i] = item[j];
+        item[j] = aux;
+      }
+    }
+  }
+
+  int middle = left + ((right - left) / 2);
+  return middle;
+}
+
+int 
+medianOfMedians (struct item *item, int start, int end)
+{
+  if(end - start < 5)
+  {
+    return median (start, end, item);
+  }
+
+  struct item aux;
+
+  for (int i = 0; i < (end + 1)/5; i++)
+  {
+    int left = 5 * i;
+    int right = left + 4;
+
+    if (right > end){
+      right = end;
+    }
+
+    int index  = median (left, right, item);
+    
+    aux = item[index];
+    item[index] = item[i];
+    item[i] = aux;
+  }
+
+  return medianOfMedians (item, 0, end/5);
+}
+
+int
+partition (struct item *item, int left, int right)
+{
+  int n = right + 1 - left;
+  struct item *auxItem = (struct item *) malloc (sizeof (struct item) * n);
+  int auxIndex[n];
+  
+  for (int i = 0; i < n; i++)
+  {
+    auxItem[i].id = item[left+i].id;
+    auxItem[i].value = item[left+i].value;
+    auxItem[i].weight = item[left+i].weight;
+    auxItem[i].rate = item[left+i].rate;
+    auxItem[i].fractionItem = item[left+i].fractionItem;
+
+    auxIndex[i] = left + i;
+  }
+
+  int indexMedian = medianOfMedians (auxItem, 0, n-1);
+  int median = auxIndex[indexMedian];
+
+  float pivot = item[median].rate;
+  int posPivot = median;
+  int i = left;
+  int j = right;
+  struct item aux;
+
+  while (1)
+  {
+    for(; item[i].rate >= pivot && i <= right; i++);
+    for(; item[j].rate < pivot && j >= left; j--);
+    if (i < j)
+    {
+      if (item[j].rate == pivot)
+      {
+        posPivot = i;
+      }
+      aux = item[i];
+      item[i] = item[j];
+      item[j] = aux;
+    }
+    else
+    {
+      aux = item[posPivot];
+      item[posPivot] = item[j];
+      item[j] = aux;
+      return j;
+    }
+  }
+}
+
+int
+kesimo (struct item *item, int left, int right, float usedWeight)
+{
+  int middle = partition (item, left, right); //Finding the middle item.
+
+  float sum = usedWeight;
+  for (int i = left; i <= middle; i++)
+  {
+    sum += item[i].weight;
+  }
+
+  if (sum == knapsackSize_ || middle >= numberItens_ -1)
+  {
+    return middle;
+  }
+  else if ( (sum > knapsackSize_) && (sum - item[middle].weight <= knapsackSize_) )
+  {
+    return middle;
+  }
+  else if (sum > knapsackSize_)
+  {
+    return kesimo (item, left, middle - 1, usedWeight);
+  }
+  else
+  {
+    return kesimo (item, middle+1, right, sum);
+  }
+}
 
 void 
 detailItens (struct item *a, int length)
@@ -203,9 +334,9 @@ showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
     printf ("\nQuantidade de itens (N): %d\n", numberItens_);
 
-    //printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
+    /*printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
 
-    /*for (int i = 0; i < knapsack->numberItens; i++) //Print Itens 
+    for (int i = 0; i < knapsack->numberItens; i++) //Print Itens 
     {
         printf ("Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
     }*/
@@ -232,7 +363,7 @@ struct knapsack
 *greedyKnapsackFractional (struct item *item, int length, int max) /// O(nlog n)
 {
     heapsortRate (item,length,false);  /// O(nlog n)
-
+    //detailItens (item, numberItens_);
     float valueItens = 0;
     int weightItens = 0;
     int count = 0;
@@ -279,8 +410,47 @@ struct knapsack
 struct knapsack 
 *linearKnapsackFractional (struct item *item, int length, int max) /// O(n)
 {
+    kesimo (item, 0, numberItens_ - 1, 0);
+    //detailItens (item, numberItens_);
+    float valueItens = 0;
+    int weightItens = 0;
+    int count = 0;
+
     struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
     knapsack->itens = (struct item *) malloc(sizeof(struct item));
+
+    for(int i = 0; i < length; i++){ /// O(n)
+        if(item[i].weight > max){
+            knapsack->itens = (struct item *) realloc (knapsack->itens, sizeof (struct item) * (count+1));
+            knapsack->itens[count].id = item[i].id;
+            knapsack->itens[count].fractionItem = (float) max / item[i].weight;
+
+            valueItens += (float) item[i].value * max / item[i].weight;
+            weightItens += max;
+
+            count++;
+            fractionItem_ = true;
+            break;
+        }
+
+        knapsack->itens = (struct item *) realloc ( knapsack->itens, sizeof (struct item) * (count+1));
+        knapsack->itens[count].id = item[i].id;
+        knapsack->itens[count].fractionItem = item[i].fractionItem;
+
+        valueItens += (float) item[i].value;
+        weightItens += item[i].weight;
+
+        count++;
+
+        max = max - item[i].weight;
+
+        if (max == 0)
+            break;
+    }
+
+    knapsack->numberItens = count;
+    knapsack->valueItens = valueItens;
+    knapsack->weightItens = weightItens;
 
     return knapsack;
 }
@@ -380,7 +550,7 @@ main (int argc, char **argv)
 
     struct knapsack *knapsackItens;
     
-    unsigned int k = 1;
+    guint32 k = 1;
     totalTimer_.reset();
 
     switch ( select ) // Select question.
@@ -396,18 +566,23 @@ main (int argc, char **argv)
         break;
 
       case 2: // O(n)
+        while (totalTimer_.getCPUTotalSecs () < 5)
+        {
+          totalTimer_.start();
+          knapsackItens = linearKnapsackFractional (itens,numberItens_,knapsackSize_);
+          totalTimer_.stop();
+          k++;
+        }        
+        break;
+
+      case 3: 
         //while (totalTimer_.getCPUTotalSecs () < 5)
         //{
           //totalTimer_.start();
-          knapsackItens = linearKnapsackFractional (itens,numberItens_,knapsackSize_);
+          //knapsackItens = pivotKnapsackFractional (itens,numberItens_,knapsackSize_);
           //totalTimer_.stop();
           //k++;
         //}        
-        break;
-
-      case 3: // O(n²)
-        // TODO
-        printf ("TODO\n");
         break;
 
       default:
