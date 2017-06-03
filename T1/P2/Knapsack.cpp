@@ -233,11 +233,11 @@ partition (struct item *item, int left, int right)
   
   for (int i = 0; i < n; i++)
   {
-    auxItem[i].id = item[left+i].id;
-    auxItem[i].value = item[left+i].value;
-    auxItem[i].weight = item[left+i].weight;
+    //auxItem[i].id = item[left+i].id;
+    //auxItem[i].value = item[left+i].value;
+    //auxItem[i].weight = item[left+i].weight;
     auxItem[i].rate = item[left+i].rate;
-    auxItem[i].fractionItem = item[left+i].fractionItem;
+    //auxItem[i].fractionItem = item[left+i].fractionItem;
 
     auxIndex[i] = left + i;
   }
@@ -276,16 +276,83 @@ partition (struct item *item, int left, int right)
 }
 
 int
-kesimo (struct item *item, int left, int right, float usedWeight)
+kesimo (struct item *item, int left, int right, int usedWeight)
 {
   int middle = partition (item, left, right); //Finding the middle item.
 
-  float sum = usedWeight;
+  int sum = usedWeight;
+
   for (int i = left; i <= middle; i++)
   {
     sum += item[i].weight;
   }
 
+  if (sum == knapsackSize_ || middle >= numberItens_ -1)
+  {
+    return middle;
+  }
+  else if ( (sum > knapsackSize_) && (sum - item[middle].weight <= knapsackSize_) )
+  {
+    return middle;
+  }
+  else if (sum > knapsackSize_)
+  {
+    return kesimo (item, left, middle - 1, usedWeight);
+  }
+  else
+  {
+    return kesimo (item, middle+1, right, sum);
+  }
+}
+
+float findPivot (struct item *item, int start, int end)
+{
+  int k = end + 1 - start;
+  float pivot = 0;
+
+  for (int i = start; i <= end; i++){
+    pivot += item[i].rate;
+  }
+
+  return (pivot/k);
+}
+
+int partitionPivot (struct item *item, int left, int right)
+{
+  float pivot = findPivot (item, left, right);
+  int i = left;
+  int j = right;
+  
+  struct item aux;
+
+  while (1)
+  {
+    for (; item[i].rate >= pivot && i <= right; i++);
+    for (; item[j].rate < pivot && j >= left; j--);
+    if (i < j)
+    {
+      aux = item[i];
+      item[i] = item[j];
+      item[j] = aux;
+    }
+    else
+    {
+      return j;
+    }
+  }
+}
+
+int kesimoPivot (struct item *item, int left, int right, int usedWeight)
+{
+  int middle = partitionPivot (item, left, right);
+
+  int sum = usedWeight;
+
+  for (int i = left; i <= middle; i++)
+  {
+    sum += item[i].weight;
+  }
+  
   if (sum == knapsackSize_ || middle >= numberItens_ -1)
   {
     return middle;
@@ -455,6 +522,54 @@ struct knapsack
     return knapsack;
 }
 
+struct knapsack 
+*pivotKnapsackFractional (struct item *item, int length, int max) /// O(n)
+{
+    kesimoPivot (item, 0, numberItens_ - 1, 0);
+    //detailItens (item, numberItens_);
+    float valueItens = 0;
+    int weightItens = 0;
+    int count = 0;
+
+    struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
+    knapsack->itens = (struct item *) malloc(sizeof(struct item));
+
+    for(int i = 0; i < length; i++){ /// O(n)
+        if(item[i].weight > max){
+            knapsack->itens = (struct item *) realloc (knapsack->itens, sizeof (struct item) * (count+1));
+            knapsack->itens[count].id = item[i].id;
+            knapsack->itens[count].fractionItem = (float) max / item[i].weight;
+
+            valueItens += (float) item[i].value * max / item[i].weight;
+            weightItens += max;
+
+            count++;
+            fractionItem_ = true;
+            break;
+        }
+
+        knapsack->itens = (struct item *) realloc ( knapsack->itens, sizeof (struct item) * (count+1));
+        knapsack->itens[count].id = item[i].id;
+        knapsack->itens[count].fractionItem = item[i].fractionItem;
+
+        valueItens += (float) item[i].value;
+        weightItens += item[i].weight;
+
+        count++;
+
+        max = max - item[i].weight;
+
+        if (max == 0)
+            break;
+    }
+
+    knapsack->numberItens = count;
+    knapsack->valueItens = valueItens;
+    knapsack->weightItens = weightItens;
+
+    return knapsack;
+}
+
 struct item 
 *loadItens (FILE *file) ///O(n)
 {
@@ -576,13 +691,13 @@ main (int argc, char **argv)
         break;
 
       case 3: 
-        //while (totalTimer_.getCPUTotalSecs () < 5)
-        //{
-          //totalTimer_.start();
-          //knapsackItens = pivotKnapsackFractional (itens,numberItens_,knapsackSize_);
-          //totalTimer_.stop();
-          //k++;
-        //}        
+        while (totalTimer_.getCPUTotalSecs () < 5)
+        {
+          totalTimer_.start();
+          knapsackItens = pivotKnapsackFractional (itens,numberItens_,knapsackSize_);
+          totalTimer_.stop();
+          k++;
+        }        
         break;
 
       default:
