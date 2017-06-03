@@ -12,3 +12,9 @@
 ```
   $ ./poly_mult input_simple.dat
 ```
+
+## Fast Fourier Transform
+```
+  $ gcc fft.c -o fft -lm
+  $ ./fft
+```
