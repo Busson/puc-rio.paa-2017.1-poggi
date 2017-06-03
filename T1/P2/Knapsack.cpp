@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "cpu_timer/CPUTimer.h"
 
+static CPUTimer totalTimer_;
 static int numberItens_ = -1;
 static int knapsackSize_ = -1;
 static bool fractionItem_ = false;
@@ -199,20 +201,20 @@ detailItens (struct item *a, int length)
 void 
 showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
-    //printf ("%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
-    printf ("\nQuantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
+    printf ("\nQuantidade de itens (N): %d\n", numberItens_);
 
-    for (int i = 0; i < knapsack->numberItens; i++)
+    //printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
+
+    /*for (int i = 0; i < knapsack->numberItens; i++) //Print Itens 
     {
         printf ("Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
-    }
+    }*/
 
-    //fprintf (file,"%d %d %f\n",knapsack->numberItens,knapsack->weightItens,knapsack->valueItens);
-    fprintf (file,"Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
+    //fprintf (file,"Quantidade de itens (N): %d\n", numberItens_);
+    //fprintf (file,"Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItens, knapsack->weightItens, knapsack->valueItens);
 
-    for (int i = 0; i < knapsack->numberItens; i++) 
+    /*for (int i = 0; i < knapsack->numberItens; i++) 
     {
-        //fprintf(file,"%d %f\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem);
         fprintf(file,"Id: %d; Quantidade: %f %%;\n", knapsack->itens[i].id, knapsack->itens[i].fractionItem*100);
     }
 
@@ -223,7 +225,7 @@ showItens (struct knapsack *knapsack, FILE *file) /// O(n)
     }
 
     printf ("\nTodos os itens estão inteiros.\n");
-    fprintf(file,"\nTodos os itens estão inteiros.\n");
+    fprintf(file,"\nTodos os itens estão inteiros.\n");*/
 }
 
 struct knapsack 
@@ -270,6 +272,15 @@ struct knapsack
     knapsack->numberItens = count;
     knapsack->valueItens = valueItens;
     knapsack->weightItens = weightItens;
+
+    return knapsack;
+}
+
+struct knapsack 
+*linearKnapsackFractional (struct item *item, int length, int max) /// O(n)
+{
+    struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
+    knapsack->itens = (struct item *) malloc(sizeof(struct item));
 
     return knapsack;
 }
@@ -364,16 +375,34 @@ main (int argc, char **argv)
         printf ("Erro, nao foi possivel criar o arquivo de saída\n");
         abort ();
     }
+
+    int select = atoi (argv[2]);    
+
+    struct knapsack *knapsackItens;
     
-    switch ( atoi (argv[2]) ) // Select question.
+    unsigned int k = 1;
+    totalTimer_.reset();
+
+    switch ( select ) // Select question.
     {
       case 1: // O(nlog n)
-        showItens ( greedyKnapsackFractional (itens,numberItens_,knapsackSize_),fileOut );
+        while (totalTimer_.getCPUTotalSecs () < 5)
+        {
+          totalTimer_.start();
+          knapsackItens = greedyKnapsackFractional (itens,numberItens_,knapsackSize_);
+          totalTimer_.stop();
+          k++;
+        }
         break;
 
       case 2: // O(n)
-        // TODO
-        printf ("TODO\n");
+        //while (totalTimer_.getCPUTotalSecs () < 5)
+        //{
+          //totalTimer_.start();
+          knapsackItens = linearKnapsackFractional (itens,numberItens_,knapsackSize_);
+          //totalTimer_.stop();
+          //k++;
+        //}        
         break;
 
       case 3: // O(n²)
@@ -384,10 +413,13 @@ main (int argc, char **argv)
       default:
         printf ("Questao invalida\n");
         break;
-    
     }
 
+    showItens (knapsackItens,fileOut);
+
     fclose (fileOut);
+    
+    printf("Time: %f\nk=%d total: %lf\n\n", totalTimer_.getCPUTotalSecs()/k, k, totalTimer_.getCPUTotalSecs() );
 
     return 0;
 }
