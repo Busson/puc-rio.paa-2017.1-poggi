@@ -7,5 +7,5 @@
 
 ```
   $ make
-  $ ./poly_mult input_simple.dat
+  $ ./polymul input_simple.dat
 ```
