@@ -6,7 +6,7 @@
 #include "cpu_timer/CPUTimer.h"
 
 static CPUTimer totalTimer_;
-static int numberItens_ = -1;
+static int numberItems_ = -1;
 static int knapsackSize_ = -1;
 static bool fractionItem_ = false;
 
@@ -332,7 +332,7 @@ kesimo (struct item *items, int left, int right, int usedWeight)
     sum += items[i].weight;
   }
 
-  if (sum == knapsackSize_ || middle >= numberItens_ -1)
+  if (sum == knapsackSize_ || middle >= numberItems_ -1)
   {
     return middle;
   }
@@ -350,7 +350,8 @@ kesimo (struct item *items, int left, int right, int usedWeight)
   }
 }
 
-float findPivot (struct item *items, int start, int end)
+float 
+findPivot (struct item *items, int start, int end)
 {
   int k = end + 1 - start;
   float pivot = 0;
@@ -362,7 +363,8 @@ float findPivot (struct item *items, int start, int end)
   return (pivot/k);
 }
 
-int partitionPivot (struct item *items, int left, int right)
+int 
+partitionPivot (struct item *items, int left, int right)
 {
   float pivot = findPivot (items, left, right);
   int i = left;
@@ -387,7 +389,8 @@ int partitionPivot (struct item *items, int left, int right)
   }
 }
 
-int kesimoPivot (struct item *items, int left, int right, int usedWeight)
+int 
+kesimoPivot (struct item *items, int left, int right, int usedWeight)
 {
   int middle = partitionPivot (items, left, right);
 
@@ -398,7 +401,7 @@ int kesimoPivot (struct item *items, int left, int right, int usedWeight)
     sum += items[i].weight;
   }
   
-  if (sum == knapsackSize_ || middle >= numberItens_ -1)
+  if (sum == knapsackSize_ || middle >= numberItems_ -1)
   {
     return middle;
   }
@@ -419,7 +422,7 @@ int kesimoPivot (struct item *items, int left, int right, int usedWeight)
 void 
 detailItens (struct item *a, int length)
 {
-    printf ("Total de Objetos: %d; Capacidade da Mochila: %d\n", numberItens_, knapsackSize_);
+    printf ("Total de Objetos: %d; Capacidade da Mochila: %d\n", numberItems_, knapsackSize_);
 
     int totalWeight = 0;
     int totalProfit = 0;
@@ -444,7 +447,7 @@ detailItens (struct item *a, int length)
 void 
 showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
-    printf ("\nQuantidade de itens (N): %d\n", numberItens_);
+    printf ("\nQuantidade de itens (N): %d\n", numberItems_);
 
     printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
     
@@ -475,6 +478,7 @@ struct knapsack
 *greedyKnapsackFractional (struct item *items, int length, int max) /// O(nlog n)
 {
     heapsortRate (items,length,false);  /// O(nlog n)
+    //quicksort (items, 0, numberItems_-1); /// O(nlog n)
     //detailItens (items, numberItens_);
     return fillKnapsack (items, length, max);
 }
@@ -482,7 +486,7 @@ struct knapsack
 struct knapsack 
 *linearKnapsackFractional (struct item *items, int length, int max) /// O(n)
 {
-    kesimo (items, 0, numberItens_ - 1, 0); /// O(n)
+    kesimo (items, 0, numberItems_-1, 0); /// O(n)
     //detailItens (items, numberItens_);
     return fillKnapsack (items, length, max);
 }
@@ -490,13 +494,30 @@ struct knapsack
 struct knapsack 
 *pivotKnapsackFractional (struct item *items, int length, int max) /// O(n²)
 {
-    kesimoPivot (items, 0, numberItens_ - 1, 0); /// O(n²)
+    kesimoPivot (items, 0, numberItems_-1, 0); /// O(n²)
     //detailItens (items, numberItens_);
     return fillKnapsack (items, length, max);
 }
 
+struct item
+*duplicateItems (struct item *items)
+{
+  struct item *auxItems = (struct item *) malloc (sizeof (struct item) * numberItems_);
+  
+  for (int i = 0; i < numberItems_; i++)
+  {
+    auxItems[i].id = items[i].id;
+    auxItems[i].value = items[i].value;
+    auxItems[i].weight = items[i].weight;
+    auxItems[i].rate = items[i].rate;
+    auxItems[i].fractionItem = items[i].fractionItem;
+  }
+
+  return auxItems;
+}
+
 struct item 
-*loadItens (FILE *file) ///O(n)
+*loadItems (FILE *file) ///O(n)
 {
     char line[1000];
     char *result;
@@ -506,9 +527,9 @@ struct item
     int j = 0;
 
     result = fgets(line, 1000, file); //Get the first line.
-    sscanf(result, "%d", &numberItens_);
+    sscanf(result, "%d", &numberItems_);
 
-    struct item *itens = (struct item *) malloc (sizeof (struct item) * numberItens_); //Instantiate itens struct.
+    struct item *itens = (struct item *) malloc (sizeof (struct item) * numberItems_); //Instantiate itens struct.
     
     while (!feof (file)) ///O(n)
     { 
@@ -523,7 +544,7 @@ struct item
             { 
                 //printf("String: %s\n",pch);
             }
-            else if ( i >= numberItens_ ) //Get the last line.
+            else if ( i >= numberItems_ ) //Get the last line.
             {
               knapsackSize_ = atoi (pch); //Assign capacity to Knapsack.
             }
@@ -575,7 +596,7 @@ main (int argc, char **argv)
         return 0;
     }
 
-    struct item *itens = loadItens (fileIn); // Load instances. / O(n²)
+    struct item *baseItems = loadItems (fileIn); // Load instances. / O(n²)
 
     fclose (fileIn);
  
@@ -587,28 +608,31 @@ main (int argc, char **argv)
     }
 
     int select = atoi (argv[2]);    
-
+    
+    struct item *items;
     struct knapsack *knapsackItens;
     
     guint32 k = 1;
+
     totalTimer_.reset();
     
     while (totalTimer_.getCPUTotalSecs () < 5)
     {
       totalTimer_.start();
-      
+      items = duplicateItems (baseItems);
+
       switch ( select ) // Select question.
       {
         case 1: // O(nlog n)
-          knapsackItens = greedyKnapsackFractional (itens,numberItens_,knapsackSize_);
+          knapsackItens = greedyKnapsackFractional (items, numberItems_, knapsackSize_);
           break;
 
         case 2: // O(n)
-           knapsackItens = linearKnapsackFractional (itens,numberItens_,knapsackSize_);
+           knapsackItens = linearKnapsackFractional (items, numberItems_, knapsackSize_);
           break;
 
         case 3: // O(n²) 
-           knapsackItens = pivotKnapsackFractional (itens,numberItens_,knapsackSize_);
+           knapsackItens = pivotKnapsackFractional (items, numberItems_, knapsackSize_);
           break;
 
         default:
