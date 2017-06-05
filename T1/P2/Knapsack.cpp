@@ -12,19 +12,19 @@ static bool fractionItem_ = false;
 
 struct item
 {
-    unsigned int id;
-    int value;
-    int weight;    
-    float rate; //rate between value and weight.
-    float fractionItem;
+  unsigned int id;
+  int value;
+  int weight;    
+  float rate; //rate between value and weight.
+  float fractionItem;
 };
 
 struct knapsack
 {
-    int numberItems;
-    int weightItems;
-    float valueItems;
-    struct item *items;    
+  int numberItems;
+  int weightItems;
+  float valueItems;
+  struct item *items;    
 };
 
 struct knapsack
@@ -36,7 +36,7 @@ struct knapsack
 
   struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
   knapsack->items = (struct item *) malloc(sizeof(struct item));
-
+   
   for(int i = 0; i < length; i++) /// 0(n)
   {
     if(items[i].weight > max)
@@ -47,7 +47,6 @@ struct knapsack
 
       valueItems += (float) items[i].value * max / items[i].weight;
       weightItems += max;
-
       count++;
       fractionItem_ = true;
       break;
@@ -69,7 +68,7 @@ struct knapsack
       break;
     }
   }
-
+  
   knapsack->numberItems = count;
   knapsack->valueItems = valueItems;
   knapsack->weightItems = weightItems;
@@ -439,7 +438,8 @@ detailItens (struct item *a, int length)
     printf ("Id: %d ; ", a[i].id);
     printf ("Value: %d ; ", a[i].value);
     printf ("Weight: %d ; ", a[i].weight);
-    printf ("Fraction: %f ;", a[i].fractionItem);
+    //printf ("Fraction: %f ;", a[i].fractionItem);
+    printf ("Rate: %f ;", a[i].rate);
         
     printf ("\n");
 
@@ -468,11 +468,11 @@ showItens (struct knapsack *knapsack, FILE *file) /// O(n)
   for (int i = 0; i < knapsack->numberItems; i++) 
   {
     fprintf(file,"Id: %d; Quantidade: %f %%;\n", knapsack->items[i].id, knapsack->items[i].fractionItem*100);
-  }
+  }*/
 
-  if(fractionItem_){
+  /*if(fractionItem_){
     printf ("\nHá um item fracionado.\n");
-    fprintf(file,"\nHá um item fracionado.\n");
+    //fprintf(file,"\nHá um item fracionado.\n");
     return;
   }
 
@@ -535,7 +535,7 @@ struct item
   sscanf(result, "%d", &numberItems_);
 
   struct item *items = (struct item *) malloc (sizeof (struct item) * numberItems_); //Instantiate itens struct.
-    
+  
   while (!feof (file)) ///O(n)
   { 
     result = fgets(line, 1000, file); //Get the next line.
@@ -584,7 +584,6 @@ struct item
   }
 
   //detailItens (items, numberItems_);
-
   return items;
 }
 
@@ -603,7 +602,7 @@ main (int argc, char **argv)
     printf ("Erro, nao foi possivel abrir o arquivo de entrada\n");
     return 0;
   }
-
+  //printf ("\n>>>>>>Lido do Arquivo:\n");
   struct item *baseItems = loadItems (fileIn); // Load instances. / O(n²)
 
   fclose (fileIn);
@@ -653,7 +652,8 @@ main (int argc, char **argv)
   }
 
   showItens (knapsackItens,fileOut);
-
+  //printf (">>>>> Depois de Ordenado: \n");
+  //detailItens (items, numberItems_);
   fclose (fileOut);
     
   printf("Time: %f\nk=%d total: %lf\n\n", totalTimer_.getCPUTotalSecs()/k, k, totalTimer_.getCPUTotalSecs() );
