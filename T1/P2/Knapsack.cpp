@@ -455,7 +455,7 @@ showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
   printf ("\nQuantidade de itens (N): %d\n", numberItems_);
 
-  printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
+  printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens na mochila: %d\nValor total dos Itens na mochila: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
     
   /*for (int i = 0; i < knapsack->numberItems; i++) //Print Itens 
   {
