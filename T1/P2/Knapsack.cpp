@@ -416,11 +416,11 @@ kesimoPivot (struct item *items, int left, int right, int usedWeight)
   }
   else if (sum > knapsackSize_)
   {
-    return kesimoPivot (items, left, middle-1, usedWeight);
+    return kesimo (items, left, middle-1, usedWeight);
   }
   else
   {
-    return kesimoPivot (items, middle+1, right, sum);
+    return kesimo (items, middle+1, right, sum);
   }
 }
 
