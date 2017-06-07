@@ -372,6 +372,7 @@ int
 partitionPivot (struct item *items, int left, int right)
 {
   float pivot = findPivot (items, left, right);
+  int posPivot = -1;
   int i = left;
   int j = right;
   
@@ -383,12 +384,28 @@ partitionPivot (struct item *items, int left, int right)
     for (; items[j].rate < pivot && j >= left; j--);
     if (i < j)
     {
+      if (items[j].rate == pivot)
+      {
+        posPivot = i;
+      }   
       aux = items[i];
       items[i] = items[j];
       items[j] = aux;
     }
     else
     {
+      if (posPivot == -1){
+        posPivot = left;
+        for (int z = left; z <= j; z++)
+        {
+          if(items[posPivot].rate > items[z].rate)
+            posPivot = z;
+        }
+      }
+
+      aux = items[posPivot];
+      items[posPivot] = items[j];
+      items[j] = aux;
       return j;
     }
   }
@@ -416,11 +433,11 @@ kesimoPivot (struct item *items, int left, int right, int usedWeight)
   }
   else if (sum > knapsackSize_)
   {
-    return kesimo (items, left, middle-1, usedWeight);
+    return kesimoPivot (items, left, middle-1, usedWeight);
   }
   else
   {
-    return kesimo (items, middle+1, right, sum);
+    return kesimoPivot (items, middle+1, right, sum);
   }
 }
 
@@ -480,7 +497,7 @@ showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 }
 
 struct knapsack 
-*greedyKnapsackFractional (struct item *items, int length, int max) /// O(nlog n)
+*sortKnapsackFractional (struct item *items, int length, int max) /// O(nlog n)
 {
   heapsortRate (items,length,false);  /// O(nlog n)
   //detailItens (items, numberItens_);
@@ -601,8 +618,8 @@ main (int argc, char **argv)
     printf ("Erro, nao foi possivel abrir o arquivo de entrada\n");
     return 0;
   }
-  //printf ("\n>>>>>>Lido do Arquivo:\n");
-  struct item *baseItems = loadItems (fileIn); // Load instances. / O(n²)
+  
+  struct item *baseItems = loadItems (fileIn); // Load instances. // O(n)
 
   fclose (fileIn);
  
@@ -630,7 +647,7 @@ main (int argc, char **argv)
     switch ( select ) // Select question.
     {
       case 1: // O(nlog n)
-        knapsackItens = greedyKnapsackFractional (items, numberItems_, knapsackSize_);
+        knapsackItens = sortKnapsackFractional (items, numberItems_, knapsackSize_);
         break;
 
       case 2: // O(n)
