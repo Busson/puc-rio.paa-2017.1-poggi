@@ -12,210 +12,219 @@ static bool fractionItem_ = false;
 
 struct item
 {
-    unsigned int id;
-    int value;
-    int weight;    
-    float rate; //rate between value and weight.
-    float fractionItem;
+  unsigned int id;
+  int value;
+  int weight;    
+  float rate; //rate between value and weight.
+  float fractionItem;
 };
 
 struct knapsack
 {
-    int numberItems;
-    int weightItems;
-    float valueItems;
-    struct item *items;    
+  int numberItems;
+  int weightItems;
+  float valueItems;
+  struct item *items;    
 };
 
 struct knapsack
 *fillKnapsack (struct item *items, int length, int max)
 {
-    float valueItems = 0;
-    int weightItems = 0;
-    int count = 0;
+  float valueItems = 0;
+  int weightItems = 0;
+  int count = 0;
 
-    struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
-    knapsack->items = (struct item *) malloc(sizeof(struct item));
+  struct knapsack *knapsack = (struct knapsack *) malloc (sizeof (struct knapsack)); 
+  knapsack->items = (struct item *) malloc(sizeof(struct item));
+   
+  for(int i = 0; i < length; i++) /// 0(n)
+  {
+    if(items[i].weight > max)
+    {
+      knapsack->items = (struct item *) realloc (knapsack->items, sizeof (struct item) * (count+1));
+      knapsack->items[count].id = items[i].id;
+      knapsack->items[count].fractionItem = (float) max / items[i].weight;
 
-    for(int i = 0; i < length; i++){ /// O(n)
-        if(items[i].weight > max){
-            knapsack->items = (struct item *) realloc (knapsack->items, sizeof (struct item) * (count+1));
-            knapsack->items[count].id = items[i].id;
-            knapsack->items[count].fractionItem = (float) max / items[i].weight;
-
-            valueItems += (float) items[i].value * max / items[i].weight;
-            weightItems += max;
-
-            count++;
-            fractionItem_ = true;
-            break;
-        }
-
-        knapsack->items = (struct item *) realloc ( knapsack->items, sizeof (struct item) * (count+1));
-        knapsack->items[count].id = items[i].id;
-        knapsack->items[count].fractionItem = items[i].fractionItem;
-
-        valueItems += (float) items[i].value;
-        weightItems += items[i].weight;
-
-        count++;
-
-        max = max - items[i].weight;
-
-        if (max == 0)
-            break;
+      valueItems += (float) items[i].value * max / items[i].weight;
+      weightItems += max;
+      count++;
+      fractionItem_ = true;
+      break;
     }
 
-    knapsack->numberItems = count;
-    knapsack->valueItems = valueItems;
-    knapsack->weightItems = weightItems;
-    return knapsack;
+    knapsack->items = (struct item *) realloc ( knapsack->items, sizeof (struct item) * (count+1));
+    knapsack->items[count].id = items[i].id;
+    knapsack->items[count].fractionItem = items[i].fractionItem;
+
+    valueItems += (float) items[i].value;
+    weightItems += items[i].weight;
+
+    count++;
+
+    max = max - items[i].weight;
+
+    if (max == 0)
+    {
+      break;
+    }
+  }
+  
+  knapsack->numberItems = count;
+  knapsack->valueItems = valueItems;
+  knapsack->weightItems = weightItems;
+  
+  return knapsack;
 }
 
 void 
 heapifyRateMin (struct item *a, int len, int index) /// O(log n)
 {
-    int left = 2 * index + 1;
-    int right = 2 * index + 2;
-    struct item aux;
+  int left = 2 * index + 1;
+  int right = 2 * index + 2;
+  struct item aux;
 
-    if (left > len - 1) 
-    {
-        return;
+  if (left > len - 1) 
+  {
+    return;
+  }
+  else if (right == len)
+  {
+    if (a[index].rate > a[left].rate)
+    {   //swap left with parent
+      aux = a[index];
+      a[index] = a[left];
+      a[left] = aux;
     }
-    else if (right == len)
-    {
-        if (a[index].rate > a[left].rate)
-        {   //swap left with parent
-            aux = a[index];
-            a[index] = a[left];
-            a[left] = aux;
-        }
-        return;
+    return;
+  }
+  else if (a[index].rate > a[left].rate || a[index].rate > a[right].rate) 
+  {
+    if (a[left].rate > a[right].rate) 
+    {   //swap right with parent
+      aux = a[index];
+      a[index] = a[right];
+      a[right] = aux;
+      heapifyRateMin (a,len,right);
     }
-    else if (a[index].rate > a[left].rate || a[index].rate > a[right].rate) 
-    {
-        if (a[left].rate > a[right].rate) 
-        {   //swap right with parent
-            aux = a[index];
-            a[index] = a[right];
-            a[right] = aux;
-            heapifyRateMin (a,len,right);
-        }
-        else
-        {   //swap left with parent
-            aux = a[index];
-            a[index] = a[left];
-            a[left] = aux;
-            heapifyRateMin (a,len,left);
-        }
+    else
+    {   //swap left with parent
+      aux = a[index];
+      a[index] = a[left];
+      a[left] = aux;
+      heapifyRateMin (a,len,left);
     }
+  }
 }
 
 void 
 heapifyRateMax (struct item *a, int len,  int index) /// O(log n)
 {
-    int left = 2 * index + 1;
-    int right = 2 * index + 2;
-    struct item aux;
+  int left = 2 * index + 1;
+  int right = 2 * index + 2;
+  struct item aux;
 
-    if (left > len-1) 
-    {
-        return;
+  if (left > len-1) 
+  {
+    return;
+  }
+  else if (right==len)
+  {
+    if (a[index].rate < a[left].rate)
+    {   //swap left with parent
+      aux = a[index];
+      a[index] = a[left];
+      a[left] = aux;
     }
-    else if (right==len){
-        if (a[index].rate < a[left].rate)
-        {   //swap left with parent
-            aux = a[index];
-            a[index] = a[left];
-            a[left] = aux;
-        }
-        return;
+    return;
+  }
+  else if (a[index].rate < a[left].rate || a[index].rate < a[right].rate) 
+  {
+    if (a[left].rate < a[right].rate) 
+    {   //swap right with parent
+      aux = a[index];
+      a[index] = a[right];
+      a[right] = aux;
+      heapifyRateMax (a,len,right);
     }
-    else if (a[index].rate < a[left].rate || a[index].rate < a[right].rate) 
-    {
-        if (a[left].rate < a[right].rate) 
-        {   //swap right with parent
-            aux = a[index];
-            a[index] = a[right];
-            a[right] = aux;
-            heapifyRateMax (a,len,right);
-        }
-        else
-        {   //swap left with parent
-            aux = a[index];
-            a[index] = a[left];
-            a[left] = aux;
-            heapifyRateMax (a,len,left);
-        }
+    else
+    {   //swap left with parent
+      aux = a[index];
+      a[index] = a[left];
+      a[left] = aux;
+      heapifyRateMax (a,len,left);
     }
+  }
 }
 
 void 
 buildHeapRate (struct item *a, int length, bool asc) /// O(n)
 {
-    int i;
+  int i;
 
-    if (asc)
+  if (asc)
+  {
+    for (i = length - 1; i >= 0; i--) 
     {
-        for (i = length - 1; i >= 0; i--) 
-        {
-            if( 2 * i + 1 > length - 1)
-                continue;
+      if ( 2 * i + 1 > length - 1)
+      {
+        continue;
+      }
 
-            heapifyRateMax (a,length,i);
-        }
+      heapifyRateMax (a,length,i);
     }
-    else 
+  }
+  else 
+  {
+    for (i = length - 1; i>= 0; i--) 
     {
-        for (i = length - 1; i>= 0; i--) 
-        {
-            if(2 * i  + 1 > length - 1)
-                continue;
+      if (2 * i  + 1 > length - 1)
+      {
+        continue;
+      }
 
-            heapifyRateMin (a,length,i);
-        }
+      heapifyRateMin (a,length,i);
     }
+  }
 
-    return;
+  return;
 }
 
 void 
 heapsortRate (struct item *list, int length, bool asc) /// O(nlog n)
 {
-    struct item aux;
-    int cunrrentLength = length;
+  struct item aux;
+  int cunrrentLength = length;
 
-    buildHeapRate (list,length,asc);
+  buildHeapRate (list,length,asc);
 
-    if (asc)
-    { //Ordem crescente.
-        while (cunrrentLength > 1)
-        {   //swap first with last
-            aux = list[0];
-            list[0] = list[cunrrentLength - 1];
-            list[cunrrentLength - 1] = aux;
-            cunrrentLength--;
+  if (asc)
+  { //Ordem crescente.
+    while (cunrrentLength > 1)
+    {   //swap first with last
+      aux = list[0];
+      list[0] = list[cunrrentLength - 1];
+      list[cunrrentLength - 1] = aux;
+      cunrrentLength--;
 
-            //heapify new heap
-            heapifyRateMax (list,cunrrentLength,0);
-        }
-
+      //heapify new heap
+      heapifyRateMax (list,cunrrentLength,0);
     }
-    else 
-    { //Ordem decrescente.
-        while (cunrrentLength > 1)
-        {   //swap first with last
-            aux = list[0];
-            list[0] = list[cunrrentLength - 1];
-            list[cunrrentLength-1] = aux;
-            cunrrentLength--;
 
-            //heapify new heap
-            heapifyRateMin (list,cunrrentLength,0);
-        }
+  }
+  else 
+  { //Ordem decrescente.
+    while (cunrrentLength > 1)
+    {   //swap first with last
+      aux = list[0];
+      list[0] = list[cunrrentLength - 1];
+      list[cunrrentLength-1] = aux;
+      cunrrentLength--;
+
+      //heapify new heap
+      heapifyRateMin (list,cunrrentLength,0);
     }
-    return;
+  }
+  return;
 }
 
 int
@@ -255,7 +264,8 @@ medianOfMedians (struct item *items, int start, int end)
     int left = 5 * i;
     int right = left + 4;
 
-    if (right > end){
+    if (right > end)
+    {
       right = end;
     }
 
@@ -278,12 +288,7 @@ partition (struct item *items, int left, int right)
   
   for (int i = 0; i < n; i++)
   {
-    //auxItems[i].id = items[left+i].id;
-    //auxItems[i].value = items[left+i].value;
-    //auxItems[i].weight = items[left+i].weight;
     auxItems[i].rate = items[left+i].rate;
-    //auxItems[i].fractionItem = items[left+i].fractionItem;
-
     auxIndex[i] = left + i;
   }
 
@@ -367,6 +372,7 @@ int
 partitionPivot (struct item *items, int left, int right)
 {
   float pivot = findPivot (items, left, right);
+  int posPivot = -1;
   int i = left;
   int j = right;
   
@@ -378,12 +384,28 @@ partitionPivot (struct item *items, int left, int right)
     for (; items[j].rate < pivot && j >= left; j--);
     if (i < j)
     {
+      if (items[j].rate == pivot)
+      {
+        posPivot = i;
+      }   
       aux = items[i];
       items[i] = items[j];
       items[j] = aux;
     }
     else
     {
+      if (posPivot == -1){
+        posPivot = left;
+        for (int z = left; z <= j; z++)
+        {
+          if(items[posPivot].rate > items[z].rate)
+            posPivot = z;
+        }
+      }
+
+      aux = items[posPivot];
+      items[posPivot] = items[j];
+      items[j] = aux;
       return j;
     }
   }
@@ -401,7 +423,7 @@ kesimoPivot (struct item *items, int left, int right, int usedWeight)
     sum += items[i].weight;
   }
   
-  if (sum == knapsackSize_ || middle >= numberItems_ -1)
+  if (sum == knapsackSize_ || middle >= numberItems_-1)
   {
     return middle;
   }
@@ -411,92 +433,91 @@ kesimoPivot (struct item *items, int left, int right, int usedWeight)
   }
   else if (sum > knapsackSize_)
   {
-    return kesimo (items, left, middle - 1, usedWeight);
+    return kesimoPivot (items, left, middle-1, usedWeight);
   }
   else
   {
-    return kesimo (items, middle+1, right, sum);
+    return kesimoPivot (items, middle+1, right, sum);
   }
 }
 
 void 
 detailItens (struct item *a, int length)
 {
-    printf ("Total de Objetos: %d; Capacidade da Mochila: %d\n", numberItems_, knapsackSize_);
+  printf ("Total de Objetos: %d; Capacidade da Mochila: %d\n", numberItems_, knapsackSize_);
 
-    int totalWeight = 0;
-    int totalProfit = 0;
+  int totalWeight = 0;
+  int totalProfit = 0;
 
-    for (int i = 0; i < length; i++)
-    {
-        printf ("Line %d: ", i + 2);
-        printf ("Id: %d ; ", a[i].id);
-        printf ("Value: %d ; ", a[i].value);
-        printf ("Weight: %d ; ", a[i].weight);
-        printf ("Fraction: %f ;", a[i].fractionItem);
+  for (int i = 0; i < length; i++)
+  {
+    printf ("Line %d: ", i + 2);
+    printf ("Id: %d ; ", a[i].id);
+    printf ("Value: %d ; ", a[i].value);
+    printf ("Weight: %d ; ", a[i].weight);
+    //printf ("Fraction: %f ;", a[i].fractionItem);
+    printf ("Rate: %f ;", a[i].rate);
         
-        printf ("\n");
+    printf ("\n");
 
-        totalWeight += a[i].weight;
-        totalProfit += a[i].value;
-    }
+    totalWeight += a[i].weight;
+    totalProfit += a[i].value;
+  }
 
-    printf ("\nTotal de objetos: %d; Peso total: %d; Lucro total: %d\n\n",length,totalWeight,totalProfit);
+  printf ("\nTotal de objetos: %d; Peso total: %d; Lucro total: %d\n\n",length,totalWeight,totalProfit);
 }
 
 void 
 showItens (struct knapsack *knapsack, FILE *file) /// O(n)
 {
-    printf ("\nQuantidade de itens (N): %d\n", numberItems_);
-
-    printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
+  printf ("\nQuantidade de itens (N): %d\n", numberItems_);
+  printf ("Quantidade de itens na mochila: %d\nPeso Total dos Itens na mochila: %d\nValor Total dos Itens na mochila: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
     
-    /*for (int i = 0; i < knapsack->numberItems; i++) //Print Itens 
-    {
-        printf ("Id: %d; Quantidade: %f %%;\n", knapsack->items[i].id, knapsack->items[i].fractionItem*100);
-    }*/
+  /*for (int i = 0; i < knapsack->numberItems; i++) //Print Itens 
+  {
+    printf ("Id: %d; Quantidade: %f %%;\n", knapsack->items[i].id, knapsack->items[i].fractionItem*100);
+  }*/
 
-    /*fprintf (file,"Quantidade de itens (N): %d\n", numberItens_);
-    fprintf (file,"Quantidade de itens na mochila: %d\nPeso Total dos Itens: %d\nValor total dos Itens: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
+  fprintf (file,"Quantidade de itens (N): %d\n", numberItems_);
+  fprintf (file,"Quantidade de itens na mochila: %d\nPeso Total dos Itens na mochila: %d\nValor Total dos Itens na mochila: %f\n\n", knapsack->numberItems, knapsack->weightItems, knapsack->valueItems);
 
-    for (int i = 0; i < knapsack->numberItems; i++) 
-    {
-        fprintf(file,"Id: %d; Quantidade: %f %%;\n", knapsack->items[i].id, knapsack->items[i].fractionItem*100);
-    }
+  for (int i = 0; i < knapsack->numberItems; i++) 
+  {
+    fprintf(file,"Id: %d; Quantidade: %f %%;\n", knapsack->items[i].id, knapsack->items[i].fractionItem*100);
+  }
 
-    if(fractionItem_){
-      printf ("\nHá um item fracionado.\n");
-      fprintf(file,"\nHá um item fracionado.\n");
-      return;
-    }
+  /*if(fractionItem_){
+    printf ("\nHá um item fracionado.\n");
+    fprintf(file,"\nHá um item fracionado.\n");
+    return;
+  }
 
-    printf ("\nTodos os itens estão inteiros.\n");
-    fprintf(file,"\nTodos os itens estão inteiros.\n");*/
+  printf ("\nTodos os itens estão inteiros.\n");
+  fprintf(file,"\nTodos os itens estão inteiros.\n");*/
 }
 
 struct knapsack 
-*greedyKnapsackFractional (struct item *items, int length, int max) /// O(nlog n)
+*sortKnapsackFractional (struct item *items, int length, int max) /// O(nlog n)
 {
-    heapsortRate (items,length,false);  /// O(nlog n)
-    //quicksort (items, 0, numberItems_-1); /// O(nlog n)
-    //detailItens (items, numberItens_);
-    return fillKnapsack (items, length, max);
+  heapsortRate (items,length,false);  /// O(nlog n)
+  //detailItens (items, numberItens_);
+  return fillKnapsack (items, length, max);
 }
 
 struct knapsack 
 *linearKnapsackFractional (struct item *items, int length, int max) /// O(n)
 {
-    kesimo (items, 0, numberItems_-1, 0); /// O(n)
-    //detailItens (items, numberItens_);
-    return fillKnapsack (items, length, max);
+  kesimo (items, 0, numberItems_-1, 0); /// O(n)
+  //detailItens (items, numberItens_);
+  return fillKnapsack (items, length, max);
 }
 
 struct knapsack 
 *pivotKnapsackFractional (struct item *items, int length, int max) /// O(n²)
 {
-    kesimoPivot (items, 0, numberItems_-1, 0); /// O(n²)
-    //detailItens (items, numberItens_);
-    return fillKnapsack (items, length, max);
+  kesimoPivot (items, 0, numberItems_-1, 0); /// O(n²)
+  //detailItens (items, numberItens_);
+  return fillKnapsack (items, length, max);
 }
 
 struct item
@@ -519,136 +540,139 @@ struct item
 struct item 
 *loadItems (FILE *file) ///O(n)
 {
-    char line[1000];
-    char *result;
-    char *pch;
+  char line[1000];
+  char *result;
+  char *pch;
 
-    int i = 0;
-    int j = 0;
+  int i = 0;
+  int j = 0;
 
-    result = fgets(line, 1000, file); //Get the first line.
-    sscanf(result, "%d", &numberItems_);
+  result = fgets(line, 1000, file); //Get the first line.
+  sscanf(result, "%d", &numberItems_);
 
-    struct item *itens = (struct item *) malloc (sizeof (struct item) * numberItems_); //Instantiate itens struct.
-    
-    while (!feof (file)) ///O(n)
-    { 
-        result = fgets(line, 1000, file); //Get the next line.
-        pch = strtok(result," ");
+  struct item *items = (struct item *) malloc (sizeof (struct item) * numberItems_); //Instantiate itens struct.
+  
+  while (!feof (file)) ///O(n)
+  { 
+    result = fgets(line, 1000, file); //Get the next line.
+    pch = strtok(result," ");
         
-        j = 0;
+    j = 0;
 
-        while (pch != NULL) //Get the next string.
+    while (pch != NULL) //Get the next string.
+    {
+      if (strpbrk(pch, "0123456789") == NULL) //Checking whether the string contains some number.
+      { 
+        //printf("String: %s\n",pch);
+      }
+      else if ( i >= numberItems_ ) //Get the last line.
+      {
+        knapsackSize_ = atoi (pch); //Assign capacity to Knapsack.
+      }
+      else 
+      {
+        switch (j) 
         {
-            if (strpbrk(pch, "0123456789") == NULL) //Checking whether the string contains some number.
-            { 
-                //printf("String: %s\n",pch);
-            }
-            else if ( i >= numberItems_ ) //Get the last line.
-            {
-              knapsackSize_ = atoi (pch); //Assign capacity to Knapsack.
-            }
-            else 
-            {
-                switch (j) 
-                {
-                  case 0: //First string in the line.
-                    itens[i].id = atoi(pch); //Assign id to item.
-                    itens[i].fractionItem = 1;
-                    break;
-                  case 1: //Second string in the line.
-                    itens[i].value = atoi(pch); //Assign value to item.
-                    break;
-                  case 2: //Third string in the line.
-                    itens[i].weight = atoi(pch); //Assign weight to item.
-                    itens[i].rate = (float)itens[i].value/itens[i].weight; //Assign rate (value/weight) to item.
-                    break;
-                  default: 
-                      break;
-                }
+          case 0: //First string in the line.
+            items[i].id = atoi(pch); //Assign id to item.
+            items[i].fractionItem = 1;
+            break;
 
-                j++;
-            }
-            pch = strtok (NULL," ");
-        }        
+          case 1: //Second string in the line.
+            items[i].value = atoi(pch); //Assign value to item.
+            break;
+
+          case 2: //Third string in the line.
+            items[i].weight = atoi(pch); //Assign weight to item.
+            items[i].rate = (float)items[i].value/items[i].weight; //Assign rate (value/weight) to item.
+            break;
+
+          default: 
+          break;
+        }
+
+        j++;
+      }
+      pch = strtok (NULL," ");
+    }        
         
-        i++;
-    }
+    i++;
+  }
 
-    //detailItens (itens, numberItens_);
-
-    return itens;
+  //detailItens (items, numberItems_);
+  return items;
 }
 
 int 
 main (int argc, char **argv)
 {
-    if (argc == 1)
-    {
-        printf ("Programa sem parametros\n");
-        return 0;
-    }
-
-    FILE *fileIn = fopen (argv[1], "r"); // Input file.
-    if (fileIn == NULL)
-    {
-        printf ("Erro, nao foi possivel abrir o arquivo de entrada\n");
-        return 0;
-    }
-
-    struct item *baseItems = loadItems (fileIn); // Load instances. / O(n²)
-
-    fclose (fileIn);
- 
-    FILE *fileOut = fopen ("Output.txt", "w"); // Output file.
-    if (fileOut == NULL)
-    {
-        printf ("Erro, nao foi possivel criar o arquivo de saída\n");
-        abort ();
-    }
-
-    int select = atoi (argv[2]);    
-    
-    struct item *items;
-    struct knapsack *knapsackItens;
-    
-    guint32 k = 1;
-
-    totalTimer_.reset();
-    
-    while (totalTimer_.getCPUTotalSecs () < 5)
-    {
-      totalTimer_.start();
-      items = duplicateItems (baseItems);
-
-      switch ( select ) // Select question.
-      {
-        case 1: // O(nlog n)
-          knapsackItens = greedyKnapsackFractional (items, numberItems_, knapsackSize_);
-          break;
-
-        case 2: // O(n)
-           knapsackItens = linearKnapsackFractional (items, numberItems_, knapsackSize_);
-          break;
-
-        case 3: // O(n²) 
-           knapsackItens = pivotKnapsackFractional (items, numberItems_, knapsackSize_);
-          break;
-
-        default:
-          printf ("Questao invalida\n");
-          break;
-      }
-      
-      totalTimer_.stop();
-      k++;
-    }
-
-    showItens (knapsackItens,fileOut);
-
-    fclose (fileOut);
-    
-    printf("Time: %f\nk=%d total: %lf\n\n", totalTimer_.getCPUTotalSecs()/k, k, totalTimer_.getCPUTotalSecs() );
-
+  if (argc == 1)
+  {
+    printf ("Programa sem parametros\n");
     return 0;
+  }
+
+  FILE *fileIn = fopen (argv[1], "r"); // Input file.
+  if (fileIn == NULL)
+  {
+    printf ("Erro, nao foi possivel abrir o arquivo de entrada\n");
+    return 0;
+  }
+  
+  struct item *baseItems = loadItems (fileIn); // Load instances. // O(n)
+
+  fclose (fileIn);
+ 
+  FILE *fileOut = fopen ("Output.txt", "w"); // Output file.
+  if (fileOut == NULL)
+  {
+    printf ("Erro, nao foi possivel criar o arquivo de saída\n");
+    abort ();
+  }
+
+  int select = atoi (argv[2]);    
+    
+  struct item *items;
+  struct knapsack *knapsackItens;
+    
+  guint32 k = 1;
+
+  totalTimer_.reset();
+    
+  while (totalTimer_.getCPUTotalSecs () < 5)
+  {
+    totalTimer_.start();
+    items = duplicateItems (baseItems);
+
+    switch ( select ) // Select question.
+    {
+      case 1: // O(nlog n)
+        knapsackItens = sortKnapsackFractional (items, numberItems_, knapsackSize_);
+        break;
+
+      case 2: // O(n)
+        knapsackItens = linearKnapsackFractional (items, numberItems_, knapsackSize_);
+        break;
+
+      case 3: // O(n²) 
+        knapsackItens = pivotKnapsackFractional (items, numberItems_, knapsackSize_);
+        break;
+
+      default:
+        printf ("Questao invalida\n");
+        break;
+    }
+      
+    totalTimer_.stop();
+    k++;
+  }
+
+  showItens (knapsackItens,fileOut);
+  //printf (">>>>> Depois de Ordenado: \n");
+  //detailItens (items, numberItems_);
+  fclose (fileOut);
+    
+  printf("Time: %f\nk=%d total: %lf\n\n", totalTimer_.getCPUTotalSecs()/k, k, totalTimer_.getCPUTotalSecs() );
+
+  return 0;
 }
