@@ -8,6 +8,7 @@ createEdges(guint32 size){
         edges[i] = (EDGE**)malloc(sizeof(EDGE*)*(size+1));
         for(guint32 j=0; j< (size+1); j++){
             edges[i][j] = (EDGE*)malloc(sizeof(EDGE));
+            edges[i][j]->ori = -1;
             edges[i][j]->dest = -1;
             edges[i][j]->c=0;
         }
@@ -19,6 +20,7 @@ createEdges(guint32 size){
 void
 insertEdge(EDGE*** edges, guint32 size, guint32 lin, guint32 col, guint32 c){  
   //  printf("%d - %d v: %d |", lin, col, c);  
+    edges[lin][col]->ori = lin;
     edges[lin][col]->dest = col;
     edges[lin][col]->c = c;
 }

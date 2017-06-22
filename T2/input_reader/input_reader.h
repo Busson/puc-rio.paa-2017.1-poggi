@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 typedef struct{
+   guint32 ori; 
    guint32 dest;
    guint32 c;
 }EDGE;
