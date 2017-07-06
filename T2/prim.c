@@ -7,6 +7,8 @@
 
 gint64 initialTime = 0; 
 
+guint32 max_depth = 0;
+
 gboolean undo_insert = false;
 
 guint mstweight = 0;
@@ -275,6 +277,9 @@ recursive_relax(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* re
   
  // printf("%ld \n",currentTime());
 
+  if(it>max_depth)
+        max_depth = it;
+
   if( currentTime() >= 3600)
      return;  
 
@@ -304,7 +309,7 @@ main(){
   guint16 src =0;
   //edges = read_content("inputs/TEST.TXT", &numNodes);
   //edges = read_content("inputs/TE16.txt", &numNodes);
-   edges = read_content("inputs/TE40-1.TXT", &numNodes);
+   edges = read_content("inputs/TC40-1.TXT", &numNodes);
   //edges = read_content("inputs/TC80-1.TXT", &numNodes);
 
   numEdges = (numNodes*numNodes);
@@ -328,13 +333,14 @@ main(){
       relax_array[i+numNodes] = 0;
  
   }
-  
+  printf("\n START... \n");
   initialTime = g_get_real_time();
   recursive_relax(edges,mst,CAP, key, relax_array, blocks, numNodes, numEdges, 0);
   
   printf("BEST CMST: %d \n", mstweight_best);
+  printf("MAX DEPTH: %d \n", max_depth);
   printMST(mst_best,numNodes);
   printCAP(CAP_best, numNodes);
-  printRelaxArray(relax_array_best, numEdges);
+  
 
 }
