@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define MAX_CAP 10
-#define FILE "inputs/TE16.txt"
+#define MAX_CAP 3
+#define FILE "inputs/TC40-1.TXT"
 
 gint64 initialTime = 0; 
 guint32 depth=0; 
@@ -164,7 +164,7 @@ getMinEdge(EDGE*** edges, EDGE** mst, gint32* key, guint8* relax_array, guint32 
            continue;
 
        for(guint32 j=0; j< numNodes; j++){
-             if(  (edges[i][j]->c < min && key[j]>= INT_MAX) && relax_array[(i*numNodes) + j]!= 2 ){
+             if(  (edges[i][j]->c < min && key[j]>= INT_MAX) ){
                  min = edges[i][j]->c;
                  *lin = i;
                  *col = j;
@@ -179,15 +179,16 @@ gboolean
 cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_array, gboolean* blocks, guint32 numNodes, guint32 numEdges){
   
  // printRelaxArray(relax_array, numEdges);
-
+  
   for(guint i=0; i< numEdges; i++){
-
+    
+   // printf("(%d,%d) ",i,i);
     if(relax_array[i]!=1)
        continue;
 
      guint32 lin = i/numNodes;
      guint32 col = i%numNodes;
-   
+  
     if(lin == col){   
        return false;
     }
@@ -223,16 +224,25 @@ cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_arra
   } 
   
   key[0]=0;
-  guint aux=0;        
+  guint aux=0;
+       
+  guint32 lin;
+  guint32 col; 
   for(guint32 i=0; i< numNodes-1; i++){
-      guint32 lin;
-      guint32 col;
+   //   printf("1-");
       getMinEdge(edges,mst, key, relax_array, numNodes,&lin,&col,blocks);
-
+   //   printf("2-");
       insertEdgeInMST(edges, mst, lin, col, numNodes);
-     //  printf(" 02 ");
+   //   printf("3-");
       updateCaps(mst,CAP,edges[lin][col]->dest, numNodes, blocks, 0);
-     //  printf(" 03 ");
+   //   printf("4-");
+      
+    
+      if(relax_array[(lin*numNodes) + col]==2){
+           printf("(%d-%d-%d)", lin, col, (lin*numNodes) + col);
+          goto end_func;
+       }
+  
       if(undo_insert){
           aux++;                  
           removeEdgeFromMST(edges, mst, lin, col, numNodes);
@@ -245,11 +255,7 @@ cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_arra
                  goto end_func;
 
               mstweight = 0; 
-              clearCAP(CAP, numNodes);
-              clearMST(mst, numNodes);
-              clearBlocks(blocks, numNodes); 
-              clearKeys(key, numNodes);
-              return false; 
+              goto end_func_error;
           }
             
       }
@@ -258,8 +264,8 @@ cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_arra
           mstweight += edges[lin][col]->c;   
       }             
   }
-                    
-//  printf(" MST TOTAL WEIGHT: %d \n", mstweight);
+                 
+
   end_func:
 
   if(CAP[0] < (numNodes-1)){
@@ -274,9 +280,6 @@ cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_arra
             copyRelaxArray(relax_array_best, relax_array, numEdges);
   }
   
-
-  //printf("numNodes %d \n",numNodes);
-  
   mstweight = 0; 
   
   clearMST(mst, numNodes);
@@ -285,6 +288,17 @@ cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_arra
 
   clearCAP(CAP, numNodes); 
   return true;
+  
+  end_func_error:
+
+  mstweight = 0; 
+  
+  clearMST(mst, numNodes);
+  clearBlocks(blocks, numNodes); 
+  clearKeys(key, numNodes);
+  clearCAP(CAP, numNodes); 
+  return false;
+
 }
 
 void 
@@ -300,16 +314,18 @@ recursive_relax(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* re
   if(it >= numEdges)
       return;
   
-  cap_mst(edges, mst, CAP, key, relax_array, blocks, numNodes, it); 
+  cap_mst(edges, mst, CAP, key, relax_array, blocks, numNodes, it);
 
   if(mstweight > mstweight_best)
       return;  
+  
+  relax_array[it]=1; //force use
+  recursive_relax(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1);
 
   relax_array[it]=2; //no_use
   recursive_relax(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1); 
      
-  relax_array[it]=1; //force use
-  recursive_relax(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1);
+  
   
 }
 
