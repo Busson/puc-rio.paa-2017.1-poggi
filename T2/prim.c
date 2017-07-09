@@ -7,6 +7,7 @@
 
 gint64 initialTime = 0; 
 guint32 depth=0; 
+
 gboolean undo_insert = false;
 
 guint mstweight = 0;
@@ -278,7 +279,7 @@ void
 recursive_relax(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_array, gboolean* blocks, guint32 numNodes, guint32 numEdges, guint it){
   
  // printf("%ld \n",currentTime());
-  if( currentTime() >= 3600)
+  if( currentTime() >= 36)
      return;  
 
   if(it > depth)
@@ -309,7 +310,7 @@ main(){
   guint16 src =0;
   //edges = read_content("inputs/TEST.TXT", &numNodes);
   //edges = read_content("inputs/TE16.txt", &numNodes);
-   edges = read_content("inputs/TE40-1.TXT", &numNodes);
+   edges = read_content("inputs/TC40-1.TXT", &numNodes);
   //edges = read_content("inputs/TC80-1.TXT", &numNodes);
 
   numEdges = (numNodes*numNodes);
@@ -333,6 +334,7 @@ main(){
       relax_array[i+numNodes] = 0;
  
   }
+
 
   printf("START C=%d  Nodes=%d \n",MAX_CAP,numNodes);
   
