@@ -4,6 +4,7 @@
 #include <limits.h>
 
 #define MAX_CAP 10
+#define FILE "inputs/TE16.txt"
 
 gint64 initialTime = 0; 
 guint32 depth=0; 
@@ -29,6 +30,17 @@ printCAP(guint32* CAP, guint32 numNodes){
        printf("%d - %d | ",i, CAP[i]+1);
    }
    printf("\n");
+}
+
+void
+printCSV(EDGE** mst, guint32 numNodes){
+ printf("Source,Target,Type,Id,Label,Weight\n");
+ for(guint32 i=0; i < numNodes; i++){
+   if(mst[i]==NULL)
+      continue;
+
+   printf("%d,%d,Undirected,%d,%d,%d\n", mst[i]->ori, mst[i]->dest, mst[i]->ori, mst[i]->ori, mst[i]->c);
+ }
 }
 
 void 
@@ -279,7 +291,7 @@ void
 recursive_relax(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_array, gboolean* blocks, guint32 numNodes, guint32 numEdges, guint it){
   
  // printf("%ld \n",currentTime());
-  if( currentTime() >= 36)
+  if( currentTime() >= 3600)
      return;  
 
   if(it > depth)
@@ -309,8 +321,8 @@ main(){
   EDGE*** edges;
   guint16 src =0;
   //edges = read_content("inputs/TEST.TXT", &numNodes);
-  //edges = read_content("inputs/TE16.txt", &numNodes);
-   edges = read_content("inputs/TC40-1.TXT", &numNodes);
+  edges = read_content(FILE, &numNodes);
+ //  edges = read_content("inputs/TC40-1.TXT", &numNodes);
   //edges = read_content("inputs/TC80-1.TXT", &numNodes);
 
   numEdges = (numNodes*numNodes);
@@ -336,7 +348,7 @@ main(){
   }
 
 
-  printf("START C=%d  Nodes=%d \n",MAX_CAP,numNodes);
+  printf("FILE: %s  START C=%d  Nodes=%d \n",FILE, MAX_CAP,numNodes);
   
   initialTime = g_get_real_time();
   recursive_relax(edges,mst,CAP, key, relax_array, blocks, numNodes, numEdges, 0);
@@ -345,6 +357,9 @@ main(){
   printf("BEST CMST: %d  DEPTH:%d\n", mstweight_best, depth);
   printMST(mst_best,numNodes);
   printCAP(CAP_best, numNodes);
+ // printf("\n");
+ // printCSV(mst_best,numNodes);
+
 //  printRelaxArray(relax_array_best, numEdges);
 
 }
