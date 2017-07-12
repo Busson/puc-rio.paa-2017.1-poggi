@@ -1,11 +1,13 @@
 #include "input_reader/input_reader.h"
 #include "cpu_timer/CPUTimer.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 
-#define MAX_CAP 3
-#define FILE "inputs/TC40-1.TXT"
+#define FILE "inputs/TE80-1.TXT"
 
+
+guint32 MAX_CAP = 10;
 gint64 initialTime = 0; 
 guint32 depth=0; 
 
@@ -13,6 +15,7 @@ gboolean undo_insert = false;
 
 guint mstweight = 0;
 guint mstweight_best = INT_MAX;
+guint mstweight_lower = INT_MAX;
 EDGE** mst;
 EDGE** mst_best;
 guint32* CAP_best;
@@ -95,6 +98,16 @@ void
 clearMST(EDGE** mst, guint32 numNodes){
    for(guint32 i=0; i < numNodes; i++)
         mst[i] = NULL;
+}
+
+void 
+terminate(guint32 numNodes){
+
+  printf("BEST CMST: %d  DEPTH:%d LOWE-B:%d\n", mstweight_best, depth, mstweight_lower);
+  printMST(mst_best,numNodes);
+  printCAP(CAP_best, numNodes); 
+
+  exit(0);
 }
 
 void
@@ -302,7 +315,7 @@ cap_mst(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_arra
 }
 
 void 
-recursive_relax(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_array, gboolean* blocks, guint32 numNodes, guint32 numEdges, guint it){
+branch_and_bound(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* relax_array, gboolean* blocks, guint32 numNodes, guint32 numEdges, guint it){
   
  // printf("%ld \n",currentTime());
   if( currentTime() >= 3600)
@@ -317,13 +330,17 @@ recursive_relax(EDGE*** edges, EDGE** mst, guint32* CAP, gint32* key, guint8* re
   cap_mst(edges, mst, CAP, key, relax_array, blocks, numNodes, it);
 
   if(mstweight > mstweight_best)
-      return;  
+      return; 
+  
+  if(mstweight_lower == mstweight_best)
+      terminate(numNodes);
+     
   
   relax_array[it]=1; //force use
-  recursive_relax(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1);
+  branch_and_bound(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1);
 
   relax_array[it]=2; //no_use
-  recursive_relax(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1); 
+  branch_and_bound(edges, mst, CAP, key, relax_array, blocks, numNodes, numEdges, it+1); 
      
   
   
@@ -363,14 +380,23 @@ main(){
  
   }
 
+  MAX_CAP = numNodes;
 
   printf("FILE: %s  START C=%d  Nodes=%d \n",FILE, MAX_CAP,numNodes);
   
+  //obtendo o lower-bound
+  cap_mst(edges, mst, CAP, key, relax_array, blocks, numNodes, 0);
+  mstweight_lower = mstweight_best;
+  mstweight_best = INT_MAX;
+  
+
+  //percorrendo o branch and bound
+  MAX_CAP = 10;
   initialTime = g_get_real_time();
-  recursive_relax(edges,mst,CAP, key, relax_array, blocks, numNodes, numEdges, 0);
+  branch_and_bound(edges,mst,CAP, key, relax_array, blocks, numNodes, numEdges, 0);
   
   printf("NODES: %d \n", numNodes);
-  printf("BEST CMST: %d  DEPTH:%d\n", mstweight_best, depth);
+  printf("BEST CMST: %d  DEPTH:%d LOWE-B:%d\n", mstweight_best, depth, mstweight_lower);
   printMST(mst_best,numNodes);
   printCAP(CAP_best, numNodes);
  // printf("\n");
