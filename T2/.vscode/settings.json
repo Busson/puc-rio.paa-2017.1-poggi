@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "time_value.h": "c",
-        "gmain.h": "c",
-        "stdio.h": "c"
-    }
-}
